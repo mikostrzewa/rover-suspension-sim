@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Suspension Sizer Docs</title>
-<meta name="description" content="How the Rover Suspension Sizer works: every parameter, the statics and dynamics models, the tuner, presets and verification.">
+<title>Suspension Sim Docs</title>
+<meta name="description" content="How the Rover Suspension Sim works: every parameter, the statics and dynamics models, the tuner, presets and verification.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400;1,600&display=swap">
@@ -104,8 +104,8 @@ td.nm,span.nm{font:13px var(--f-mono);white-space:nowrap}
 </head>
 <body>
 <header class="top"><div class="top-in">
-  <div><h1>Rover Suspension Sizer · Documentation</h1><p>Every parameter, the models behind the numbers, and how to use each tab.</p></div>
-  <a class="btn" href="rover-suspension-sizer.html">Open the tool</a>
+  <div><h1>Rover Suspension Sim · Documentation</h1><p>Every parameter, the models behind the numbers, and how to use each tab.</p></div>
+  <a class="btn" href="rover-suspension-sim.html">Open the tool</a>
 </div></header>
 <div class="layout">
   <nav class="toc" aria-label="Contents"><details open><summary>Contents</summary><h2>Contents</h2><ol><li><a href="#overview">Overview</a></li><li><a href="#geometry">Geometry</a></li><li><a href="#statics">Statics model</a></li><li><a href="#sizing">Spring sizing</a></li><li><a href="#tab-statics">Statics &amp; sizing tab</a></li><li><a href="#dynamics">Dynamics model</a></li><li><a href="#vehicle">Vehicle dynamics panel</a></li><li><a href="#terrain">Terrain run tab</a></li><li><a href="#drop">Drop test tab</a></li><li><a href="#tuner">Tuner tab</a></li><li><a href="#presets">Presets</a></li><li><a href="#layout">Customizing the layout</a></li><li><a href="#verification">Verification</a></li><li><a href="#limits">Assumptions and limits</a></li><li><a href="#glossary">Glossary</a></li></ol></details></nav>
@@ -122,7 +122,7 @@ td.nm,span.nm{font:13px var(--f-mono);white-space:nowrap}
 <li><b>Presets.</b> Save each design you want to compare and switch between them from the sidebar.</li>
 </ol>
 <h3 id="files">Files<a class="anchor" href="#files" aria-label="Link to this section">#</a></h3>
-<div class="tblwrap"><table class="stab"><thead><tr><th>File</th><th>What it is</th></tr></thead><tbody><tr><td><code>rover-suspension-sizer.html</code></td><td>The tool. Only drawing and inputs live here; every number comes from <code>physics.js</code>.</td></tr><tr><td><code>physics.js</code></td><td>All the math: statics, sizing, terrain, vehicle model, equations of motion, scenarios and the tuner. No user interface code, so it also runs in Node. Must sit in the same folder as the page.</td></tr><tr><td><code>physics-tests.js</code></td><td>34 independent checks of the math (see <a href="#verification">Verification</a>).</td></tr><tr><td><code>verify.html</code></td><td>Runs those checks in the browser and lists the results.</td></tr><tr><td><code>docs.html</code></td><td>This page.</td></tr></tbody></table></div>
+<div class="tblwrap"><table class="stab"><thead><tr><th>File</th><th>What it is</th></tr></thead><tbody><tr><td><code>rover-suspension-sim.html</code></td><td>The tool. Only drawing and inputs live here; every number comes from <code>physics.js</code>.</td></tr><tr><td><code>physics.js</code></td><td>All the math: statics, sizing, terrain, vehicle model, equations of motion, scenarios and the tuner. No user interface code, so it also runs in Node. Must sit in the same folder as the page.</td></tr><tr><td><code>physics-tests.js</code></td><td>34 independent checks of the math (see <a href="#verification">Verification</a>).</td></tr><tr><td><code>verify.html</code></td><td>Runs those checks in the browser and lists the results.</td></tr><tr><td><code>docs.html</code></td><td>This page.</td></tr></tbody></table></div>
 <h3 id="units">Units and sign conventions<a class="anchor" href="#units" aria-label="Link to this section">#</a></h3>
 <ul>
 <li>Inputs use <b>mm, kg, N, degrees</b>; spring rates in <b>N/mm</b>; damping in <b>N·s/m</b> (force per metre per second of shock shaft speed). The dynamics runs internally in SI units.</li>

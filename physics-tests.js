@@ -1,5 +1,5 @@
 /*
- * Rover Suspension Sizer — physics checks
+ * Rover Suspension Sim — physics checks
  * ========================================
  * Independent checks of the math in physics.js. Each check compares the model
  * against something it was not built from: a force/moment balance, a finite

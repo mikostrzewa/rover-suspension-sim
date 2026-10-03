@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>[hidden]{display:none!important}img{max-width:100%}</style>
-<title>Rover Suspension Sizer</title>
+<title>Rover Suspension Sim</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -307,7 +307,7 @@ a.lay-btn{text-decoration:none}
 <div class="wrap">
   <header class="top">
     <div class="brand">
-      <h1>Rover Suspension Sizer</h1>
+      <h1>Rover Suspension Sim</h1>
       <p>Rocker legs with coilovers, 2D side view: loads, spring sizing, terrain runs and drop tests</p>
     </div>
     <div class="top-r">
@@ -658,7 +658,7 @@ a.lay-btn{text-decoration:none}
 <script>
 if(!window.RoverPhysics){document.body.insertAdjacentHTML('afterbegin','<p style="margin:16px;padding:12px 16px;border:1px solid #bb3030;border-radius:8px;color:#bb3030;font:15px system-ui">physics.js was not found. Keep it in the same folder as this page.</p>');}
 (()=>{
-const g=9.81,R2D=180/Math.PI,D2R=Math.PI/180,KEY='rover-suspension-sizer-v1';
+const g=9.81,R2D=180/Math.PI,D2R=Math.PI/180,KEY='rover-suspension-sim-v1';
 const RP=window.RoverPhysics;
 const OBS=RP.OBSTACLES,preset=RP.presetMap;
 const DYNDEF={mw:2.5,mleg:1.0,ky:250,J:0.03,tyre:'rigid',kt:25,ct:150,mu:0.8,crr:0.06,cb:400,cr:800,kbs:300,Ts:12,rpm:150,dFront:true,dRear:true,coast:false};
@@ -682,6 +682,8 @@ function sanitize(o){const s=clone(DEF);if(!o||typeof o!=='object')return s;
     if(Array.isArray(o.map.obs))s.map.obs=o.map.obs.filter(ob=>ob&&OBS[ob.type]).map(ob=>({type:ob.type,x:+ob.x||0,h:Number.isFinite(+ob.h)?+ob.h:OBS[ob.type].h,w:Math.max(2,+ob.w||OBS[ob.type].w),n:Math.max(1,Math.round(+ob.n||1))}));}
   return s;}
 function load(){try{const t=localStorage.getItem(KEY);if(t)return sanitize(JSON.parse(t));}catch(e){}return clone(DEF);}
+/* One-time move of saved data from the tool's old name (Rover Suspension Sizer) so nobody loses designs, presets or layout. */
+(function(){try{[['rover-suspension-sizer-v1','rover-suspension-sim-v1'],['rover-suspension-sizer-presets-v1','rover-suspension-sim-presets-v1'],['rover-suspension-sizer-layout-v1','rover-suspension-sim-layout-v1']].forEach(([o,n])=>{const v=localStorage.getItem(o);if(v!==null){if(localStorage.getItem(n)===null)localStorage.setItem(n,v);localStorage.removeItem(o);}});}catch(e){}})();
 let PS=null;/* preset store, set up near the end */
 let saveT=0;function save(){if(PS)pMark();clearTimeout(saveT);saveT=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}},250);}
 let S=load();
@@ -1406,7 +1408,7 @@ const ro2=new ResizeObserver(()=>{requestAnimationFrame(()=>{if(!$('tab-terrain'
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{tDraw();dDraw();});}catch(e){}
 /* ---- Rover presets (left sidebar). A preset stores only the rover design keys below;
    the map, run, drop and tuner settings are left alone when one is loaded. ---- */
-const PKEY='rover-suspension-sizer-presets-v1',PBUILTIN={id:'builtin-default',name:'Default',builtin:true};
+const PKEY='rover-suspension-sim-presets-v1',PBUILTIN={id:'builtin-default',name:'Default',builtin:true};
 const PDKEYS=['m','share','cgx','cgy','rw','sym','mode','G','f','kman','legs','dyn'];
 const PICO={edit:'<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.8 2.7l2.5 2.5L6 12.5l-3.1.6.6-3.1z"/></svg>',
   lock:'<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="7" width="9" height="6.5" rx="1.2"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2"/></svg>',
@@ -1544,7 +1546,7 @@ function pInit(){PS=pLoadStore();
    panel sections / vehicle subsections / parameter rows tagged here, tiles and charts when they are made.
    Hidden keys are stored per tab ("tab|key") and applied with a generated stylesheet, so re-rendered
    tiles and charts are hidden the moment they appear. Hiding never changes any value or calculation. ---- */
-const LKEY='rover-suspension-sizer-layout-v1';
+const LKEY='rover-suspension-sim-layout-v1';
 const LAYEYE='<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8 12.1 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></svg>';
 const LAYEYEOFF='<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 2.5l11 11M6.6 4C7 3.7 7.5 3.5 8 3.5c4.1 0 6.5 4.5 6.5 4.5a12 12 0 01-1.9 2.4M10.6 11.6A6 6 0 018 12.5C3.9 12.5 1.5 8 1.5 8a12 12 0 012.6-3"/></svg>';
 const HELPSEL='.panel p.hint,.presets p.hint,p.note,.chart-head>.hint,.card>p.hint';

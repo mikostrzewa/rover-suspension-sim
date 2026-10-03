@@ -1,7 +1,7 @@
 /*
- * Rover Suspension Sizer — physics module
+ * Rover Suspension Sim — physics module
  * =======================================
- * All math used by rover-suspension-sizer.html lives in this file. The page
+ * All math used by rover-suspension-sim.html lives in this file. The page
  * only draws and collects inputs; every number it shows comes from a call into
  * RoverPhysics below. Nothing here touches the DOM, so the file also runs in
  * Node:   const RP = require('./physics.js');

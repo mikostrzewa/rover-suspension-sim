@@ -1,4 +1,4 @@
-# Rover Suspension Sizer
+# Rover Suspension Sim
 
 Design tool for the rover's rocker-leg coilover suspension: 2D statics and spring sizing, terrain runs, drop tests and a spring/damper tuner.
 
@@ -10,7 +10,7 @@ Design tool for the rover's rocker-leg coilover suspension: 2D statics and sprin
 
 | File | What it is |
 |---|---|
-| `rover-suspension-sizer.html` | The tool (interface only) |
+| `rover-suspension-sim.html` | The tool (interface only) |
 | `physics.js` | All the math; also runs in Node |
 | `physics-tests.js` | 34 independent checks (`node physics-tests.js`) |
 | `verify.html` | Runs the checks in the browser |
