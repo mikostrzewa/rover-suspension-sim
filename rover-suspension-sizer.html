@@ -1,0 +1,1627 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+<title>Rover Suspension Sizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: CAD-style workspace. Drawing sheet on the left, properties panel on the right, results and charts below. */
+:root{
+  --bg:#eceef1; --panel:#f8f9fa; --sheet:#ffffff; --ink:#14171b; --ink2:#4b525b; --muted:#737a83;
+  --line:#d3d8de; --grid:#edf0f3; --accent:#1d5bb8; --accent-ink:#ffffff; --accent-wash:#e2ebf8;
+  --fN:#6a5dd0; --fW:#0d8460; --fS:#ad6a07; --m1:#cf3c3c; --m2:#bd447c; --steel:#262b31; --tire:#868d96; --ref:#868d96;
+  --good:#257a3c; --warn:#94600e; --bad:#bb3030; --good-wash:#e2f2e6; --warn-wash:#f7edd9; --bad-wash:#f8e2e2;
+  --s1:#2a78d6; --s2:#eb6834; --gridline:#e1e0d9; --axis:#c3c2b7; --earth:#ddd3c1; --earth-line:#8a7a5f;
+  --f-display:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1114; --panel:#16191d; --sheet:#121519; --ink:#e7eaee; --ink2:#a9b0b9; --muted:#828a93;
+  --line:#2b3037; --grid:#1a1e23; --accent:#5b9bf0; --accent-ink:#0b1220; --accent-wash:#18273d;
+  --fN:#9a90ec; --fW:#2fb98b; --fS:#e3a03d; --m1:#ee6b6b; --m2:#e07aa8; --steel:#d5dae0; --tire:#7d858e; --ref:#7d858e;
+  --good:#4fbf6c; --warn:#e0a54a; --bad:#ef6b6b; --good-wash:#15301e; --warn-wash:#33270f; --bad-wash:#3a1818;
+  --s1:#3987e5; --s2:#d95926; --gridline:#2c2c2a; --axis:#383835; --earth:#3a342a; --earth-line:#9c8b6c; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0f1114; --panel:#16191d; --sheet:#121519; --ink:#e7eaee; --ink2:#a9b0b9; --muted:#828a93;
+  --line:#2b3037; --grid:#1a1e23; --accent:#5b9bf0; --accent-ink:#0b1220; --accent-wash:#18273d;
+  --fN:#9a90ec; --fW:#2fb98b; --fS:#e3a03d; --m1:#ee6b6b; --m2:#e07aa8; --steel:#d5dae0; --tire:#7d858e; --ref:#7d858e;
+  --good:#4fbf6c; --warn:#e0a54a; --bad:#ef6b6b; --good-wash:#15301e; --warn-wash:#33270f; --bad-wash:#3a1818;
+  --s1:#3987e5; --s2:#d95926; --gridline:#2c2c2a; --axis:#383835; --earth:#3a342a; --earth-line:#9c8b6c; color-scheme:dark;}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;margin:0}
+.wrap{max-width:1700px;margin:0 auto;padding-inline:20px;padding-block:14px 40px}
+h1,h2,h3,h4{font-family:var(--f-display);font-weight:600;margin:0;text-wrap:balance;letter-spacing:.01em}
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.brand h1{font-size:26px;line-height:1.1}
+.brand p{margin:2px 0 0;color:var(--ink2);font-size:14px}
+.tabs{display:flex;gap:4px}
+.tab{font:500 15px var(--f-display);letter-spacing:.02em;padding:7px 14px;border:1px solid var(--line);background:var(--panel);color:var(--ink2);border-radius:6px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tab:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.work{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:16px;align-items:start}
+@media (max-width:960px){.work{grid-template-columns:minmax(0,1fr)}}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-bottom:8px;font-size:13px;color:var(--ink2)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel)}
+.seg button{font:500 13px var(--f-body);border:0;background:transparent;color:var(--ink2);padding:5px 10px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent-wash);color:var(--accent)}
+.seg button+button{border-left:1px solid var(--line)}
+.chk{display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+.chk input{accent-color:var(--accent);margin:0}
+.btn{font:500 13px var(--f-body);padding:5px 11px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;cursor:pointer}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary:hover{color:var(--accent-ink);filter:brightness(1.08)}
+.sym{font-weight:600;color:var(--ink)}
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:8px;position:relative;overflow:hidden}
+#fbd{display:block;width:100%;user-select:none;-webkit-user-select:none}
+.caption{display:flex;flex-wrap:wrap;gap:4px 16px;justify-content:space-between;font:12px var(--f-mono);color:var(--muted);padding:6px 2px 0}
+.travel{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px 18px;margin-top:10px}
+.trow{display:grid;grid-template-columns:auto minmax(0,1fr) 64px auto;gap:8px;align-items:center;font-size:13px;color:var(--ink2)}
+.trow output{font:500 13px var(--f-mono);color:var(--ink);text-align:right}
+input[type=range]{accent-color:var(--accent);width:100%;margin:0}
+.note{font-size:13px;color:var(--ink2);margin:6px 0 0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 14px 16px;display:flex;flex-direction:column;gap:16px}
+.panel h2{font-size:17px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.panel h2 small{font:500 11px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.grid-lr{display:grid;grid-template-columns:minmax(0,1fr) 82px 82px;gap:5px 8px;align-items:center;margin-top:8px}
+.grid-1{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:5px 8px;align-items:center;margin-top:8px}
+.grid-lr .hd,.grid-1 .hd{font:500 12px var(--f-mono);color:var(--muted);text-align:right}
+label.k{font-size:13px;color:var(--ink2)}
+label.k .u{color:var(--muted);font-size:12px}
+.num{width:100%;height:30px;padding:0 6px;font:13px var(--f-mono);color:var(--ink);background:var(--sheet);border:1px solid var(--line);border-radius:4px;text-align:right}
+.num:hover{border-color:var(--ink2)}
+.num.linked{background:var(--grid)}
+select.num{text-align:left;font-family:var(--f-body);font-size:13px}
+.hint{font-size:12px;color:var(--muted);margin:6px 0 0}
+.filebar{display:flex;flex-wrap:wrap;gap:6px}
+.status{font-size:12px;color:var(--ink2);min-height:16px;margin-top:6px}
+.checks{display:flex;flex-direction:column;gap:6px;margin:12px 0 0}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:13px;padding:6px 10px;border-radius:6px;border:1px solid var(--line);background:var(--panel)}
+.pill{font:600 11px var(--f-mono);letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:999px;white-space:nowrap}
+.pill.ok{background:var(--good-wash);color:var(--good)}
+.pill.warn{background:var(--warn-wash);color:var(--warn)}
+.pill.bad{background:var(--bad-wash);color:var(--bad)}
+.results{margin-top:18px;display:flex;flex-direction:column;gap:16px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.tile .lab{font-size:12px;color:var(--ink2)}
+.tile .val{font:600 22px var(--f-display);margin-top:2px}
+.tile .val span{font:500 13px var(--f-mono);color:var(--muted);margin-left:4px}
+.tile .sub{font:12px var(--f-mono);color:var(--muted)}
+.cols{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:960px){.cols{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px;min-width:0}
+.card h3{font-size:16px;margin-bottom:6px}
+.tblwrap{overflow-x:auto}
+table.res{width:100%;border-collapse:collapse;font-size:13px}
+table.res th,table.res td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+table.res th:first-child,table.res td:first-child{text-align:left;color:var(--ink2);white-space:normal}
+table.res td{font:13px var(--f-mono);color:var(--ink)}
+table.res td:first-child{font-family:var(--f-body)}
+table.res thead th{font:500 12px var(--f-mono);color:var(--muted)}
+table.res tr.sec td{font:600 14px var(--f-display);color:var(--ink);padding-top:12px;border-bottom:1px solid var(--line)}
+.strokebars{display:flex;flex-direction:column;gap:12px}
+.sb-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px}
+.sb svg{display:block;width:100%;height:64px}
+.chart-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.chart{position:relative;min-width:0}
+.chart h4{font-size:15px}
+.chart .sub{font-size:12px;color:var(--muted);margin:0 0 4px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--ink2);margin:2px 0 4px}
+.legend i{display:inline-block;width:16px;height:0;border-top:2px solid;vertical-align:middle;margin-right:5px}
+.legend i.d{border-top-style:dashed}
+.chart svg{display:block;width:100%;height:210px;overflow:visible}
+.tip{position:absolute;pointer-events:none;background:var(--sheet);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:12px;color:var(--ink2);box-shadow:0 4px 14px rgba(0,0,0,.12);white-space:nowrap;z-index:2}
+.tip b{font:500 13px var(--f-mono);color:var(--ink)}
+.tip .r{display:flex;align-items:center;gap:6px}
+.tip i{display:inline-block;width:12px;border-top:2px solid}
+details.sweep summary{cursor:pointer;font:600 15px var(--f-display)}
+.dyn{max-width:980px;display:flex;flex-direction:column;gap:16px}
+.dyn p{margin:0;max-width:70ch;color:var(--ink2)}
+.dyn ul{margin:6px 0 0;padding-left:18px;color:var(--ink2)}
+.dyn li{margin:3px 0}
+#fbd .hd{cursor:grab;outline:none;touch-action:none}
+#fbd.dragging,#fbd.dragging .hd{cursor:grabbing}
+#fbd .hd .hit{fill:transparent}
+#fbd .hd:focus-visible .ring{stroke:var(--accent);stroke-width:2;fill:none}
+#fbd .hd .ring{fill:none;stroke:none}
+#fbd .hd:hover .ring{stroke:var(--accent);stroke-width:1.5;fill:none}
+#fbd text{font-family:var(--f-mono);font-size:12px;paint-order:stroke;stroke:var(--sheet);stroke-width:3px;stroke-linejoin:round}
+.gridl{stroke:var(--grid);stroke-width:1}
+.refl{stroke:var(--muted);stroke-width:1;stroke-dasharray:4 4}
+.body{fill:var(--grid);stroke:var(--line);stroke-width:1}
+.leg{stroke:var(--steel);stroke-width:6;stroke-linecap:round}
+.brk{stroke:var(--steel);stroke-width:4;stroke-linecap:round}
+.ghost{stroke:var(--muted);stroke-width:1.5;stroke-dasharray:5 4;fill:none}
+.tire{fill:none;stroke:var(--tire);stroke-width:3}
+.hub{fill:var(--tire)}
+.ground{stroke:var(--muted);stroke-width:1.5}
+.hatch{stroke:var(--muted);stroke-width:1}
+.coil{fill:none;stroke:var(--ink2);stroke-width:1.6;stroke-linejoin:round}
+.coilax{stroke:var(--ink2);stroke-width:1}
+.eye{fill:var(--sheet);stroke:var(--ink2);stroke-width:1.5}
+.travelarc{fill:none;stroke:var(--accent);stroke-width:1.5;stroke-dasharray:3 3}
+.arc{fill:none;stroke:var(--ink2);stroke-width:1}
+.dim{stroke:var(--m1);stroke-width:1}
+.dimd{stroke:var(--m1);stroke-width:1;stroke-dasharray:2 3}
+.arr{stroke-width:2.5;fill:none}
+.arr-N{stroke:var(--fN)} .arr-W{stroke:var(--fW)} .arr-S{stroke:var(--fS)} .arr-R{stroke:var(--ref)}
+.ah-N{fill:var(--fN)} .ah-W{fill:var(--fW)} .ah-S{fill:var(--fS)} .ah-R{fill:var(--ref)}
+.t-N{fill:var(--fN)} .t-W{fill:var(--fW)} .t-S{fill:var(--fS)} .t-R{fill:var(--ref)} .t-m1{fill:var(--m1)} .t-m2{fill:var(--m2)} .t-mu{fill:var(--muted)} .t-ink{fill:var(--ink2)}
+.dot-m1{fill:var(--m1)} .dot-m2{fill:var(--m2)} .dot-w{fill:var(--steel)} .dot-lim{fill:var(--accent)}
+.cgo{fill:var(--sheet);stroke:var(--fW);stroke-width:2} .cgq{fill:var(--fW)}
+.tb-group{display:inline-flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.btn.sq{min-width:32px;padding:5px 8px;font-family:var(--f-mono)}
+.num.tiny{width:auto;height:28px;padding:0 4px;text-align:left}
+.stage{position:relative;background:var(--sheet);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.stage canvas{display:block;width:100%;height:400px;touch-action:none;outline:none}
+.stage canvas:focus-visible{box-shadow:inset 0 0 0 2px var(--accent)}
+@media (max-width:600px){.stage canvas{height:290px}}
+.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--sheet) 72%,transparent)}
+.ov-card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px;min-width:230px;font-size:13px}
+.bar{height:6px;background:var(--grid);border-radius:3px;margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent)}
+.mini{display:block;width:100%;height:56px;margin-top:6px;border:1px solid var(--line);border-radius:6px;background:var(--sheet);cursor:pointer}
+.player{display:grid;grid-template-columns:auto minmax(0,1fr) 78px auto;gap:8px;align-items:center;margin-top:8px}
+.player output{font:500 13px var(--f-mono);text-align:right}
+.pad{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+.pad .btn{padding:8px 14px;user-select:none;-webkit-user-select:none;touch-action:none}
+.pad .btn.on{background:var(--accent-wash);border-color:var(--accent);color:var(--accent)}
+.readouts{margin-top:10px;overflow-x:auto}
+.ro-head{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:13px;color:var(--ink2);margin-bottom:4px}
+.ro-head b{font:500 13px var(--f-mono);color:var(--ink)}
+table.ro{border-collapse:collapse;font-size:13px;width:100%}
+table.ro th,table.ro td{padding:4px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+table.ro th:first-child,table.ro td:first-child{text-align:left;color:var(--ink2);font-weight:400;font-family:var(--f-body)}
+table.ro td{font:13px var(--f-mono);color:var(--ink)}
+table.ro thead th{font:500 12px var(--f-mono);color:var(--muted)}
+.tbar{display:inline-block;width:72px;height:8px;background:var(--grid);border:1px solid var(--line);border-radius:4px;position:relative;vertical-align:middle;margin-left:8px}
+.tbar i{position:absolute;top:-3px;width:3px;height:12px;margin-left:-1px;background:var(--ink);border-radius:1px}
+.tbar b{position:absolute;top:-2px;width:1px;height:10px;background:var(--muted)}
+.tbar.hit{border-color:var(--bad);background:var(--bad-wash)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font:500 12px var(--f-body);padding:4px 10px;border:1px dashed var(--ink2);border-radius:999px;background:var(--sheet);color:var(--ink);cursor:pointer}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.obslist{display:flex;flex-direction:column;gap:5px;margin-top:10px}
+.obrow{display:grid;grid-template-columns:minmax(0,1fr) 60px 52px 52px 38px 28px;gap:4px;align-items:center;font-size:12px;padding:2px;border-radius:4px}
+.obrow.sel{background:var(--accent-wash)}
+.obrow .num{height:26px;font-size:12px;padding:0 4px}
+.obrow .del{height:26px;padding:0;font-size:13px}
+.obhead{font:500 11px var(--f-mono);color:var(--muted);text-align:right}
+.obhead:first-child{text-align:left}
+.vehpanel{display:flex;flex-direction:column;gap:14px}
+.derived{font:12px var(--f-mono);color:var(--ink2);margin-top:8px;display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:3px 12px}
+.derived span:nth-child(3n+1){font-family:var(--f-body)}
+.derived span:not(:nth-child(3n+1)){text-align:right;color:var(--ink)}
+.u-status{font-size:13px;color:var(--ink2)}
+.u-vars{display:grid;grid-template-columns:minmax(0,1fr) 78px 78px;gap:5px 8px;align-items:center;margin-top:8px}
+.u-chartbox{min-width:0}
+.u-stack{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,470px),1fr));gap:14px;align-items:start}
+#gTune{grid-template-columns:minmax(0,1fr) 170px}
+.derived .dh{font:500 11px var(--f-mono)!important;color:var(--muted)!important}
+/* Customize layout: hideable sections, cards, tiles, charts and parameter rows */
+.top-r{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.lay-btn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;font:500 15px var(--f-display);letter-spacing:.02em;color:var(--ink2)}
+.lay-btn[aria-pressed="true"]{background:var(--accent-wash);border-color:var(--accent);color:var(--accent)}
+.help{display:inline-grid;place-items:center;width:18px;height:18px;margin-left:6px;border-radius:50%;border:1px solid var(--line);font:600 11px/1 var(--f-body);color:var(--muted);text-decoration:none;letter-spacing:0;text-transform:none;vertical-align:2px;flex:none}
+.help:hover,.help:focus-visible{color:var(--accent);border-color:var(--accent)}
+.panel h2 .help{margin-right:auto;align-self:center}
+a.lay-btn{text-decoration:none}
+.lay-count{font:500 11px var(--f-mono);background:var(--warn-wash);color:var(--warn);border-radius:999px;padding:1px 7px;letter-spacing:0}
+.tabhost{min-width:0}
+.lay-bar{position:sticky;top:8px;z-index:30;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin-bottom:14px;padding:10px 14px;border:1px solid var(--accent);border-radius:8px;background:var(--accent-wash);box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.lay-msg{display:flex;flex-direction:column;gap:2px;font-size:13px;color:var(--ink2);max-width:80ch}
+.lay-msg strong{font:600 15px var(--f-display);color:var(--ink);letter-spacing:.01em}
+.lay-msg svg{vertical-align:-3px;color:var(--accent)}
+.lay-acts{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.lay-acts .chk{font-size:13px;color:var(--ink2);margin-right:4px}
+.lrow{display:grid;grid-column:1/-1;grid-template-columns:subgrid;align-items:center;position:relative}
+.lrow:not(:has(> :not([hidden]):not(.lay-chip))){display:none}
+.lsub{display:grid;grid-column:1/-1;grid-template-columns:subgrid;row-gap:5px;align-items:center;position:relative}
+.lay-chip{display:none}
+.customizing .lay-chip{position:absolute;z-index:8;top:-11px;right:8px;display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px 0 6px;font:500 12px var(--f-body);color:var(--ink2);background:var(--panel);border:1px solid var(--line);border-radius:999px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.customizing .lay-chip:hover{border-color:var(--accent);color:var(--accent)}
+.customizing .lay-chip[aria-pressed="true"]{background:var(--warn-wash);border-color:var(--warn);color:var(--warn)}
+.customizing [data-lay]{position:relative}
+.customizing .work [data-lay]:not(.lrow):not(.lsub),.customizing .results [data-lay]{outline:1px dashed var(--line);outline-offset:3px}
+.customizing .panel>[data-lay]{padding-top:12px}
+.customizing .lay-blk{padding-top:26px}
+.customizing .lay-blk>.lay-chip{top:2px}
+.customizing .lay-chip svg{display:block;width:14px;height:14px;flex:none;overflow:visible}
+.customizing .chart[data-lay],.customizing .u-chartbox[data-lay]{padding-top:12px}
+.customizing .lrow{padding-left:30px;border-radius:4px}
+.customizing .lrow:hover{background:var(--accent-wash)}
+.customizing .lrow>.lay-chip{top:50%;left:0;right:auto;transform:translateY(-50%);width:24px;height:22px;padding:0;justify-content:center}
+.customizing .lrow>.lay-chip span{display:none}
+.customizing .lsub>.lay-chip{top:4px;right:0}
+.customizing .readouts{overflow:visible}
+/* Presets sidebar (left of every tab) */
+.shell{display:grid;grid-template-columns:240px minmax(0,1fr);gap:16px;align-items:start}
+.shell.p-collapsed{grid-template-columns:42px minmax(0,1fr)}
+.presets{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;min-width:0}
+.p-body{display:flex;flex-direction:column;gap:10px}
+.p-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.p-head h2{font-size:17px;display:flex;align-items:baseline;gap:8px}
+.p-head h2 small{font:500 11px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.p-cur{font-size:12px;color:var(--ink2);display:flex;flex-wrap:wrap;gap:3px 6px;align-items:center}
+.p-cur b{color:var(--ink);font-weight:600;overflow-wrap:anywhere}
+.p-cur .pill{padding:1px 6px}
+.p-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.p-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;border:1px solid transparent;border-radius:6px;min-height:44px}
+.p-row:hover{border-color:var(--line);background:var(--sheet)}
+.p-row[aria-current="true"]{background:var(--accent-wash);border-color:var(--accent)}
+.p-load{appearance:none;border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;padding:6px 8px;display:flex;flex-direction:column;gap:1px;min-width:0;border-radius:6px}
+.p-load:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.p-top{display:flex;align-items:baseline;gap:6px;min-width:0}
+.p-name{font-weight:600;font-size:14px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.p-date{font:11px var(--f-mono);color:var(--muted);white-space:nowrap;margin-left:auto;flex:none}
+.p-sum{font:11px var(--f-mono);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-tools{display:flex;gap:2px;padding-right:4px;opacity:0}
+.p-row:hover .p-tools,.p-row:focus-within .p-tools,.p-row[aria-current="true"] .p-tools{opacity:1}
+@media (hover:none){.p-tools{opacity:1}}
+.p-ico{width:28px;height:28px;padding:0;display:inline-grid;place-items:center;border:1px solid transparent;background:transparent;color:var(--ink2);border-radius:5px;cursor:pointer;flex:none}
+.p-ico:hover{border-color:var(--line);color:var(--accent);background:var(--panel)}
+.p-ico.del:hover{color:var(--bad)}
+.p-lock{display:inline-grid;place-items:center;width:28px;height:28px;color:var(--muted)}
+.p-confirm{grid-column:1/-1;padding:6px 8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px}
+.p-confirm span{flex:1 1 100%;overflow-wrap:anywhere}
+.p-edit{grid-column:1/-1;padding:4px;display:flex;flex-direction:column;gap:4px}
+.p-edit .row{display:flex;gap:4px}
+.p-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.p-form{display:flex;flex-direction:column;gap:6px;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--sheet)}
+.p-form .row{display:flex;gap:6px;flex-wrap:wrap}
+.presets input.num{text-align:left;font-family:var(--f-body);font-size:14px}
+.p-msg{font-size:12px;color:var(--muted);min-height:0}
+.p-msg.warn{color:var(--warn)}.p-msg.bad{color:var(--bad)}
+.btn.warnb{border-color:var(--warn);color:var(--warn)}
+.btn.dangerb{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn.dangerb:hover{color:#fff;filter:brightness(1.08)}
+.p-empty{font-size:12px;color:var(--muted);padding:4px 8px}
+.p-undo{appearance:none;border:0;background:none;font:inherit;padding:0;cursor:pointer;color:var(--accent);font-weight:600;margin-left:6px;text-decoration:underline}
+.p-rail{display:none;appearance:none;border:0;background:none;cursor:pointer;flex-direction:column;align-items:center;gap:8px;padding:4px 0;color:var(--ink2);font:500 14px var(--f-display);letter-spacing:.03em;width:100%}
+.p-rail:hover{color:var(--accent)}
+.p-rail span{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;max-height:60vh;overflow:hidden;text-overflow:ellipsis}
+.shell.p-collapsed .presets{padding:8px 0}
+.shell.p-collapsed .p-body{display:none}
+.shell.p-collapsed .p-rail{display:flex}
+@media (max-width:1239px){
+  .shell,.shell.p-collapsed{grid-template-columns:minmax(0,1fr)}
+  .presets{position:static;max-height:none}
+  .p-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+  .p-actions{display:flex;flex-wrap:wrap}
+  .shell.p-collapsed .presets{padding:8px 12px}
+  .shell.p-collapsed .p-rail{flex-direction:row;justify-content:flex-start}
+  .p-rail span{writing-mode:horizontal-tb;transform:none;max-height:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Rover Suspension Sizer</h1>
+      <p>Rocker legs with coilovers, 2D side view: loads, spring sizing, terrain runs and drop tests</p>
+    </div>
+    <div class="top-r">
+    <nav class="tabs" role="tablist" aria-label="Tool sections">
+      <button class="tab" role="tab" id="tab-btn-statics" aria-controls="tab-statics" aria-selected="true">Statics &amp; sizing</button>
+      <button class="tab" role="tab" id="tab-btn-terrain" aria-controls="tab-terrain" aria-selected="false">Terrain run</button>
+      <button class="tab" role="tab" id="tab-btn-drop" aria-controls="tab-drop" aria-selected="false">Drop test</button>
+      <button class="tab" role="tab" id="tab-btn-tune" aria-controls="tab-tune" aria-selected="false">Tuner</button>
+    </nav>
+    <a class="btn lay-btn" id="docsBtn" href="docs.html" target="rssdocs" title="Open the documentation in a new tab"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 3.2C4 2.5 6 2.5 8 3.6v9.6c-2-1.1-4-1.1-5.5-.4z"/><path d="M13.5 3.2C12 2.5 10 2.5 8 3.6v9.6c2-1.1 4-1.1 5.5-.4z"/></svg><span>Docs</span></a>
+    <button type="button" class="btn lay-btn" id="layBtn" aria-pressed="false" title="Hide or show sections, cards, tiles, charts and parameters"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2 4h7M12 4h2M2 8h2M7 8h7M2 12h9M14 12h0"/><circle cx="10.5" cy="4" r="1.5"/><circle cx="5.5" cy="8" r="1.5"/><circle cx="12.5" cy="12" r="1.5"/></svg><span>Customize</span><span class="lay-count" id="layCount" hidden></span></button>
+    </div>
+  </header>
+
+  <div class="shell" id="shell">
+  <aside class="presets" id="presets" aria-label="Rover presets">
+    <button type="button" class="p-rail" id="pExpand" aria-label="Show presets"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg><span id="pRailTxt">Presets</span></button>
+    <div class="p-body">
+      <div class="p-head">
+        <h2>Presets <a class="help" href="docs.html#presets" target="rssdocs" title="Help: presets" aria-label="Help: presets">?</a><small>rover</small></h2>
+        <button type="button" class="p-ico" id="pCollapse" aria-label="Hide presets" aria-expanded="true" title="Hide presets"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></button>
+      </div>
+      <div class="p-cur" id="pCur"></div>
+      <ul class="p-list" id="pList" aria-label="Saved presets"></ul>
+      <div class="p-actions">
+        <button type="button" class="btn primary" id="pNew">Save as new</button>
+        <button type="button" class="btn" id="pOver">Overwrite</button>
+      </div>
+      <form class="p-form" id="pForm" hidden>
+        <label class="k" for="pName">Name for the new preset</label>
+        <input class="num" id="pName" maxlength="40" autocomplete="off" spellcheck="false">
+        <div class="p-msg" id="pFormMsg" aria-live="polite"></div>
+        <div class="row"><button type="submit" class="btn primary" id="pSave">Save</button><button type="button" class="btn" id="pCancel">Cancel</button></div>
+      </form>
+      <div class="status" id="pStatus" aria-live="polite"></div>
+      <div class="filebar">
+        <button type="button" class="btn" id="pExport" data-dl hidden>Export presets</button>
+        <label class="btn" for="pImport" style="display:inline-flex;align-items:center">Import</label>
+        <input type="file" id="pImport" accept=".json,application/json" hidden>
+      </div>
+      <p class="hint">A preset holds the rover: geometry, CG, mass, spring sizing, coilover and the vehicle panel. Loading one leaves the map and the run, drop and tuner settings as they are. Click the active preset to go back to its saved version.</p>
+      <p class="hint" style="margin:0">Presets are kept in this browser. Export makes a file to back them up or share them; Import also takes a design JSON.</p>
+    </div>
+  </aside>
+  <div class="tabhost">
+  <div class="lay-bar" id="layBar" role="region" aria-label="Customize layout" hidden>
+    <div class="lay-msg"><strong>Customizing <span id="layTab">this tab</span></strong><span>Click <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8 12.1 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></svg> to hide or show a section, card, tile, chart or parameter. Hidden parameters keep their values and still count in every result. Each tab has its own layout.</span></div>
+    <div class="lay-acts">
+      <label class="chk"><input type="checkbox" id="layHelp" checked> Help text</label>
+      <button type="button" class="btn" id="layShowTab">Show all on this tab</button>
+      <button type="button" class="btn" id="layShowAll">Show all tabs</button>
+      <button type="button" class="btn primary" id="layDone">Done</button>
+    </div>
+  </div>
+
+  <section id="tab-statics" role="tabpanel" aria-labelledby="tab-btn-statics">
+    <div class="work">
+      <div style="min-width:0">
+        <div class="toolbar">
+          <label class="chk sym"><input type="checkbox" id="sym" checked> Symmetric legs</label>
+          <span>Wheel drag</span>
+          <span class="seg" role="group" aria-label="What dragging a wheel changes">
+            <button type="button" id="dragGeom" aria-pressed="true">Geometry</button>
+            <button type="button" id="dragTravel" aria-pressed="false">Travel</button>
+          </span>
+          <label class="chk"><input type="checkbox" id="showF" checked> Forces</label>
+          <label class="chk"><input type="checkbox" id="showR"> Reactions</label>
+          <label class="chk"><input type="checkbox" id="showD" checked> Dimensions</label>
+          <button type="button" class="btn" id="fitBtn">Fit view</button>
+        </div>
+        <div data-lay="drawing" data-lay-name="Drawing">
+        <div class="sheet" id="sheet">
+          <svg id="fbd" role="img" aria-label="Free-body diagram of the rover side view. Drag the coloured points to edit the geometry.">
+            <defs>
+              <marker id="ah-N" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path class="ah-N" d="M0 0L10 5L0 10z"/></marker>
+              <marker id="ah-W" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path class="ah-W" d="M0 0L10 5L0 10z"/></marker>
+              <marker id="ah-S" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path class="ah-S" d="M0 0L10 5L0 10z"/></marker>
+              <marker id="ah-R" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path class="ah-R" d="M0 0L10 5L0 10z"/></marker>
+            </defs>
+            <g id="layerDraw"></g>
+            <g id="layerHandles"></g>
+          </svg>
+        </div>
+        <div class="caption"><span id="capGrid">Grid 50 mm</span><span>Units mm · N · kg</span><span>Drag points · arrow keys nudge 1 mm, Shift 10 mm</span></div>
+        </div>
+        <div data-lay="travel" data-lay-name="Travel sliders">
+        <div class="travel">
+          <div class="trow"><span>Left travel</span><input type="range" id="hL" step="1" aria-label="Left wheel travel from ride height"><output id="hLo">0 mm</output><button type="button" class="btn" data-ride="L">Ride</button></div>
+          <div class="trow"><span>Right travel</span><input type="range" id="hR" step="1" aria-label="Right wheel travel from ride height"><output id="hRo">0 mm</output><button type="button" class="btn" data-ride="R">Ride</button></div>
+        </div>
+        <p class="note">Travel moves a wheel with the body held level (+ is bump, − is droop). Arrows show the 1 g static forces at the drawn pose.</p>
+        </div>
+        <div class="checks" id="checks" aria-live="polite" data-lay="checks" data-lay-name="Checks"></div>
+      </div>
+
+      <aside class="panel" aria-label="Design inputs">
+        <div>
+          <h2>Rover <a class="help" href="docs.html#statics-params" target="rssdocs" title="Help: rover inputs" aria-label="Help: rover inputs">?</a><small>whole vehicle</small></h2>
+          <div class="grid-1" id="gRover"></div>
+          <p class="hint">Level statics use CG x only. CG height and wheel radius matter in the terrain run and drop test.</p>
+        </div>
+        <div>
+          <h2>Legs <a class="help" href="docs.html#geometry" target="rssdocs" title="Help: leg geometry" aria-label="Help: leg geometry">?</a><small id="symTag">symmetric</small></h2>
+          <div class="grid-lr" id="gLegs"><span></span><span class="hd">Left β</span><span class="hd">Right α</span></div>
+          <p class="hint">Mount 1 is on the body, measured from the pivot (x outward, y up). Mount 2 is on the leg: a along the leg, e square to it (up is +).</p>
+        </div>
+        <div>
+          <h2>Spring sizing <a class="help" href="docs.html#sizing" target="rssdocs" title="Help: spring sizing" aria-label="Help: spring sizing">?</a><small>method</small></h2>
+          <div class="grid-1">
+            <label class="k" for="mode">Size the spring by</label>
+            <select class="num" id="mode">
+              <option value="droop">Droop travel, no preload</option>
+              <option value="G">Load at max bump</option>
+              <option value="freq">Ride frequency</option>
+              <option value="manual">Spring rate I choose</option>
+            </select>
+            <label class="k" for="modeVal" id="modeLab">Load at max bump <span class="u">(× static)</span></label>
+            <input class="num" id="modeVal" type="number" step="0.1">
+          </div>
+          <p class="hint" id="modeHint"></p>
+        </div>
+        <div>
+          <h2>Coilover <a class="help" href="docs.html#coil-fit" target="rssdocs" title="Help: coilover fit" aria-label="Help: coilover fit">?</a><small>shock body</small></h2>
+          <div class="grid-lr" id="gCoil"><span></span><span class="hd">Left</span><span class="hd">Right</span></div>
+        </div>
+        <div>
+          <h2>Design file <a class="help" href="docs.html#statics-params" target="rssdocs" title="Help: design file" aria-label="Help: design file">?</a></h2>
+          <div class="filebar" style="margin-top:8px">
+            <button type="button" class="btn" id="dlJson" data-dl hidden>Download JSON</button>
+            <button type="button" class="btn" id="dlCsv" data-dl hidden>Download sweep CSV</button>
+            <button type="button" class="btn" id="copyJson">Copy JSON</button>
+            <label class="btn" for="importFile" style="display:inline-flex;align-items:center">Load JSON</label>
+            <input type="file" id="importFile" accept=".json,application/json" hidden>
+            <button type="button" class="btn" id="resetBtn">Reset to defaults</button>
+          </div>
+          <textarea id="jsonFallback" class="num" style="height:90px;margin-top:8px;text-align:left;font-size:11px" hidden readonly aria-label="Design JSON"></textarea>
+          <div class="status" id="fileStatus" aria-live="polite">Your last design is kept in this browser.</div>
+        </div>
+      </aside>
+    </div>
+
+    <section class="results" aria-label="Results">
+      <div class="tiles" id="tiles"></div>
+      <div class="cols">
+        <div class="card" data-lay="card:legres" data-lay-name="Leg results">
+          <h3>Leg results <a class="help" href="docs.html#statics-outputs" target="rssdocs" title="Help: leg results" aria-label="Help: leg results">?</a></h3>
+          <div class="tblwrap"><table class="res" id="resTable"></table></div>
+        </div>
+        <div class="card" data-lay="card:coil" data-lay-name="Coilover fit">
+          <h3>Coilover fit <a class="help" href="docs.html#coil-fit" target="rssdocs" title="Help: coilover fit" aria-label="Help: coilover fit">?</a></h3>
+          <p class="hint" style="margin:0 0 8px">Spring eye-to-eye length across the travel, against the shock's compressed and extended lengths.</p>
+          <div class="strokebars" id="strokeBars"></div>
+        </div>
+      </div>
+      <div class="card" data-lay="card:sweep" data-lay-name="Across the wheel travel">
+        <div class="chart-head">
+          <h3>Across the wheel travel <a class="help" href="docs.html#statics-outputs" target="rssdocs" title="Help: charts" aria-label="Help: charts">?</a></h3>
+          <span class="seg" role="group" aria-label="Leg shown in the charts">
+            <button type="button" id="chL" aria-pressed="false">Left leg</button>
+            <button type="button" id="chR" aria-pressed="true">Right leg</button>
+          </span>
+        </div>
+        <div class="charts" id="charts"></div>
+        <div data-lay="sweeptable" data-lay-name="Sweep table" style="margin-top:12px"><details class="sweep">
+          <summary>Sweep table</summary>
+          <div class="tblwrap"><table class="res" id="sweepTable"></table></div>
+        </details></div>
+      </div>
+    </section>
+  </section>
+
+  <section id="tab-terrain" role="tabpanel" aria-labelledby="tab-btn-terrain" hidden>
+    <div class="work">
+      <div style="min-width:0">
+        <div class="toolbar">
+          <span class="seg" role="group" aria-label="Terrain view">
+            <button type="button" id="tvEdit" aria-pressed="false">Edit map</button>
+            <button type="button" id="tvDrive" aria-pressed="true">Drive</button>
+          </span>
+          <span class="tb-group" id="tDriveTools">
+            <button type="button" class="btn primary" id="tRun">Run simulation</button>
+            <button type="button" class="btn" id="tLive">Drive live</button>
+            <button type="button" class="btn" id="tStop" hidden>Stop</button>
+            <label class="chk"><input type="checkbox" id="tForces" checked> Forces</label>
+            <label class="chk"><input type="checkbox" id="tHold"> Hold throttle</label>
+          </span>
+          <span class="tb-group" id="tEditTools" hidden>
+            <span class="seg" role="group" aria-label="Map tool">
+              <button type="button" id="toolMove" aria-pressed="true">Move</button>
+              <button type="button" id="toolDraw" aria-pressed="false">Draw</button>
+            </span>
+            <label class="chk">Height ×<select id="tVex" class="num tiny"><option value="1">1</option><option value="2" selected>2</option><option value="4">4</option></select></label>
+            <button type="button" class="btn" id="tFit">Fit map</button>
+          </span>
+          <span class="tb-group">
+            <button type="button" class="btn sq" id="tZoomOut" aria-label="Zoom out">−</button>
+            <button type="button" class="btn sq" id="tZoomIn" aria-label="Zoom in">+</button>
+          </span>
+        </div>
+        <div class="stage" id="tStage">
+          <canvas id="tCanvas" tabindex="0" aria-label="Terrain run view. In Drive live mode use the arrow keys or A and D for throttle, Space to brake."></canvas>
+          <div class="overlay" id="tOverlay" hidden><div class="ov-card"><div id="tOvText">Simulating…</div><div class="bar"><i id="tOvBar"></i></div></div></div>
+        </div>
+        <div data-lay="minimap" data-lay-name="Minimap"><canvas id="tMini" class="mini" aria-label="Whole map overview. Click to jump."></canvas></div>
+        <div class="player" id="tPlayer" data-lay="player" data-lay-name="Replay bar">
+          <button type="button" class="btn sq" id="tPlay" aria-label="Play">▶</button>
+          <input type="range" id="tTime" min="0" max="1" step="0.005" value="0" aria-label="Replay time">
+          <output id="tTimeOut">0.00 s</output>
+          <select id="tSpeed" class="num tiny" aria-label="Playback speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select>
+        </div>
+        <div class="pad" id="tPad" hidden>
+          <button type="button" class="btn" id="padRev">◀ Reverse</button>
+          <button type="button" class="btn" id="padBrake">Brake</button>
+          <button type="button" class="btn primary" id="padGo">Go ▶</button>
+          <span class="hint" style="margin:0">Keys: → or D throttle, ← or A reverse, Space brake</span>
+        </div>
+        <p class="note" id="tHelpEdit" hidden>Drag the blue points to shape the ground, double-click empty ground to add a point and double-click a point to delete it. Drag diamonds to move obstacles (top) or change their width (side). Drag the green flag to set the start. Drag empty space to pan. Draw mode: drag to sketch a new ground profile.</p>
+        <div class="readouts" id="tRead" data-lay="readouts" data-lay-name="Readouts"></div>
+        <div class="checks" id="tChecks" data-lay="checks" data-lay-name="Checks"></div>
+        <section class="results" aria-label="Terrain run results">
+          <div class="tiles" id="tTiles"></div>
+          <div class="card" data-lay="card:rec" data-lay-name="Run recording">
+            <div class="chart-head"><h3>Run recording <a class="help" href="docs.html#run-results" target="rssdocs" title="Help: run results" aria-label="Help: run results">?</a></h3><span class="hint" style="margin:0">Click a chart to jump the replay to that moment.</span>
+              <span class="filebar"><button type="button" class="btn" id="tCsv" data-dl hidden>Download run CSV</button></span></div>
+            <div class="charts" id="tCharts"><p class="hint">Run a simulation or a live drive to record data.</p></div>
+          </div>
+        </section>
+      </div>
+      <aside class="panel" aria-label="Terrain run inputs">
+        <div>
+          <h2>Run setup <a class="help" href="docs.html#run-setup" target="rssdocs" title="Help: run setup" aria-label="Help: run setup">?</a><small>start</small></h2>
+          <div class="grid-1" id="gRun"></div>
+          <p class="hint">Throttle is the motor duty (negative drives backwards). Live mode uses its size for the Go and Reverse keys.</p>
+        </div>
+        <div>
+          <h2>Map <a class="help" href="docs.html#map-editor" target="rssdocs" title="Help: editing the map" aria-label="Help: editing the map">?</a><small id="mapLen">length</small></h2>
+          <div class="grid-1" style="margin-top:8px">
+            <label class="k" for="mapPreset">Course preset</label>
+            <select class="num" id="mapPreset">
+              <option value="">Choose…</option><option value="mixed">Mixed course</option><option value="flat">Flat</option><option value="rocks">Rock garden</option><option value="steps">Steps up and down</option><option value="wash">Washboard</option><option value="slope">15° slope</option>
+            </select>
+          </div>
+          <div class="chips" id="obsAdd" aria-label="Add obstacle"></div>
+          <div class="obslist" id="obsList"></div>
+          <div class="filebar" style="margin-top:10px">
+            <label class="btn" for="csvFile" style="display:inline-flex;align-items:center">Import CSV profile</label>
+            <input type="file" id="csvFile" accept=".csv,.txt,text/csv,text/plain" hidden>
+            <select class="num tiny" id="csvUnits" aria-label="CSV units"><option value="auto">auto units</option><option value="mm">mm</option><option value="m">m</option></select>
+            <button type="button" class="btn" id="mapFlatten">Flatten ground</button>
+            <button type="button" class="btn" id="mapClearObs">Remove obstacles</button>
+          </div>
+          <p class="hint">CSV: two columns, distance and height. The profile replaces the ground spline; obstacles stay on top.</p>
+        </div>
+        <div class="vehpanel" data-prefix="t"></div>
+      </aside>
+    </div>
+  </section>
+
+  <section id="tab-drop" role="tabpanel" aria-labelledby="tab-btn-drop" hidden>
+    <div class="work">
+      <div style="min-width:0">
+        <div class="toolbar">
+          <button type="button" class="btn primary" id="dRun">Run drop test</button>
+          <button type="button" class="btn" id="dFind">Find max drop height</button>
+          <label class="chk"><input type="checkbox" id="dForces" checked> Forces</label>
+        </div>
+        <div class="stage" id="dStage">
+          <canvas id="dCanvas" aria-label="Drop test view"></canvas>
+          <div class="overlay" id="dOverlay" hidden><div class="ov-card"><div id="dOvText">Simulating…</div><div class="bar"><i id="dOvBar"></i></div></div></div>
+        </div>
+        <div class="player" data-lay="player" data-lay-name="Replay bar">
+          <button type="button" class="btn sq" id="dPlay" aria-label="Play">▶</button>
+          <input type="range" id="dTime" min="0" max="1" step="0.001" value="0" aria-label="Replay time">
+          <output id="dTimeOut">0.000 s</output>
+          <select id="dSpeed" class="num tiny" aria-label="Playback speed"><option value="0.05">0.05×</option><option value="0.1">0.1×</option><option value="0.25" selected>0.25×</option><option value="1">1×</option></select>
+        </div>
+        <div class="readouts" id="dRead" data-lay="readouts" data-lay-name="Readouts"></div>
+        <div class="checks" id="dChecks" data-lay="checks" data-lay-name="Checks"></div>
+        <section class="results" aria-label="Drop test results">
+          <div class="tiles" id="dTiles"></div>
+          <div class="card" data-lay="card:rec" data-lay-name="Drop recording">
+            <div class="chart-head"><h3>Drop recording <a class="help" href="docs.html#drop-results" target="rssdocs" title="Help: drop results" aria-label="Help: drop results">?</a></h3><span class="hint" style="margin:0">Click a chart to jump the replay to that moment.</span></div>
+            <div class="charts" id="dCharts"><p class="hint">Run a drop test to record data.</p></div>
+          </div>
+        </section>
+      </div>
+      <aside class="panel" aria-label="Drop test inputs">
+        <div>
+          <h2>Drop setup <a class="help" href="docs.html#drop" target="rssdocs" title="Help: drop test" aria-label="Help: drop test">?</a><small>flat ground</small></h2>
+          <div class="grid-1" id="gDrop"></div>
+          <p class="hint">Height is measured from the lowest tyre to the ground. The legs start hanging at full droop, as they would in the air.</p>
+        </div>
+        <div class="vehpanel" data-prefix="d"></div>
+      </aside>
+    </div>
+  </section>
+  <section id="tab-tune" role="tabpanel" aria-labelledby="tab-btn-tune" hidden>
+    <div class="work">
+      <div style="min-width:0">
+        <div class="toolbar">
+          <button type="button" class="btn primary" id="uStart">Start tuning</button>
+          <button type="button" class="btn" id="uStop" hidden>Stop</button>
+          <button type="button" class="btn" id="uApply" disabled>Apply tuned setup</button>
+          <button type="button" class="btn" id="uCsv" data-dl hidden>Download trials CSV</button>
+        </div>
+        <div class="card" data-lay="card:progress" data-lay-name="Progress">
+          <div class="u-status" id="uStatus">Pick what to minimise and the ranges on the right, then start. Every trial drives the chosen scenarios with one spring, preload and damper setting.</div>
+          <div class="bar" style="margin-top:10px"><i id="uBar"></i></div>
+          <div class="u-conv" id="uConv"></div>
+        </div>
+        <div class="tiles" id="uTiles" style="margin-top:14px"></div>
+        <div class="u-stack" style="margin-top:14px">
+          <div class="card" data-lay="card:setup" data-lay-name="Setup"><h3>Setup <a class="help" href="docs.html#tune-results" target="rssdocs" title="Help: tuner results" aria-label="Help: tuner results">?</a></h3><div class="tblwrap"><table class="res" id="uParams"></table></div><p class="hint" id="uParamsNote"></p></div>
+          <div class="card" data-lay="card:results" data-lay-name="Results"><h3>Results <a class="help" href="docs.html#tune-results" target="rssdocs" title="Help: tuner results" aria-label="Help: tuner results">?</a></h3><div class="tblwrap"><table class="res" id="uMetrics"></table></div></div>
+        </div>
+        <div class="card" style="margin-top:14px" data-lay="card:accel" data-lay-name="CG acceleration, current vs tuned">
+          <div class="chart-head"><h3>CG acceleration, current vs tuned <a class="help" href="docs.html#tune-objective" target="rssdocs" title="Help: tuner objective" aria-label="Help: tuner objective">?</a></h3><span class="hint" style="margin:0">Vertical acceleration at the CG, 0 g at rest, averaged over each sample.</span></div>
+          <div class="charts" id="uCharts"><p class="hint">Results appear here after tuning.</p></div>
+        </div>
+        <div class="checks" id="uChecks" data-lay="checks" data-lay-name="Checks"></div>
+      </div>
+      <aside class="panel" aria-label="Tuner inputs">
+        <div>
+          <h2>Objective <a class="help" href="docs.html#tune-objective" target="rssdocs" title="Help: tuner objective" aria-label="Help: tuner objective">?</a><small>minimise</small></h2>
+          <div class="grid-1" id="gTune">
+            <label class="k" for="uScen">Scenarios</label>
+            <select class="num" id="uScen"><option value="both">Terrain run + drop test</option><option value="run">Terrain run</option><option value="drop">Drop test</option></select>
+            <label class="k" for="uMetric">Measure</label>
+            <select class="num" id="uMetric"><option value="both">Peak and RMS</option><option value="peak">Peak</option><option value="rms">RMS</option></select>
+          </div>
+          <label class="chk" style="margin-top:8px;font-size:13px;color:var(--ink2)"><input type="checkbox" id="uForeAft"> Include fore-aft acceleration</label>
+          <p class="hint">The terrain run uses the map and run setup from the Terrain run tab; the drop uses the Drop test tab settings. Peaks are 10 ms averages. Each measure is scored against the current setup, so 1.00 means no change.</p>
+        </div>
+        <div>
+          <h2>Tune these <a class="help" href="docs.html#tune-vars" target="rssdocs" title="Help: tuned variables" aria-label="Help: tuned variables">?</a><small>range</small></h2>
+          <div class="u-vars" id="uVars"><span class="obhead" style="text-align:left">Variable</span><span class="obhead">Min</span><span class="obhead">Max</span></div>
+          <p class="hint">Front and rear get the same values. Preload is set through the ride height it gives: + means the rover sits lower (more sag). The tuner reports the matching collar preload.</p>
+        </div>
+        <div class="vehpanel" data-prefix="u"></div>
+      </aside>
+    </div>
+  </section>
+  </div><!-- /tabhost -->
+  </div><!-- /shell -->
+</div>
+
+<script src="physics.js"></script>
+<script>
+if(!window.RoverPhysics){document.body.insertAdjacentHTML('afterbegin','<p style="margin:16px;padding:12px 16px;border:1px solid #bb3030;border-radius:8px;color:#bb3030;font:15px system-ui">physics.js was not found. Keep it in the same folder as this page.</p>');}
+(()=>{
+const g=9.81,R2D=180/Math.PI,D2R=Math.PI/180,KEY='rover-suspension-sizer-v1';
+const RP=window.RoverPhysics;
+const OBS=RP.OBSTACLES,preset=RP.presetMap;
+const DYNDEF={mw:2.5,mleg:1.0,ky:250,J:0.03,tyre:'rigid',kt:25,ct:150,mu:0.8,crr:0.06,cb:400,cr:800,kbs:300,Ts:12,rpm:150,dFront:true,dRear:true,coast:false};
+let dynReady=false;
+const LEGDEF={L:600,th:20,x1:260,y1:190,a:305,e:85,hmax:100,droop:50,ext:255,stroke:90};
+const DEF={v:1,m:50,share:50,cgx:0,cgy:0,rw:120,sym:true,mode:'droop',G:2.5,f:2.0,kman:8,legs:{L:{...LEGDEF},R:{...LEGDEF}},dyn:{...DYNDEF},run:{u:80,v0:0,x0:800,tmax:30},drop:{h:300,pitch:0,vx:0,t:1.5},map:preset('mixed'),tune:{scen:'both',w:50,metric:'both',foreAft:false,clear:5,budget:60,vars:{k:{on:true,min:2,max:30},dh:{on:true,min:-15,max:15},cb:{on:true,min:0,max:3000},cr:{on:true,min:0,max:5000}}}};
+const ui={h:{L:0,R:0},drag:'geom',showF:true,showR:false,showD:true,chart:'R'};
+const $=id=>document.getElementById(id);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const other=s=>s==='L'?'R':'L';
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+function sanitize(o){const s=clone(DEF);if(!o||typeof o!=='object')return s;
+  ['m','share','cgx','cgy','rw','G','f','kman'].forEach(k=>{if(Number.isFinite(+o[k]))s[k]=+o[k];});
+  if(typeof o.sym==='boolean')s.sym=o.sym;if(['G','droop','freq','manual'].includes(o.mode))s.mode=o.mode;
+  ['L','R'].forEach(side=>{const src=o.legs&&o.legs[side];if(src)Object.keys(LEGDEF).forEach(k=>{if(Number.isFinite(+src[k]))s.legs[side][k]=+src[k];});});
+  ['dyn','run','drop'].forEach(g0=>{const src=o[g0];if(!src||typeof src!=='object')return;Object.keys(s[g0]).forEach(k=>{const v=src[k];if(typeof s[g0][k]==='boolean'){if(typeof v==='boolean')s[g0][k]=v;}else if(typeof s[g0][k]==='string'){if(typeof v==='string')s[g0][k]=v;}else if(v!=null&&Number.isFinite(+v))s[g0][k]=+v;});});
+  if(o.tune&&typeof o.tune==='object'){const T=o.tune,D0=s.tune;if(['both','run','drop'].includes(T.scen))D0.scen=T.scen;if(['both','peak','rms'].includes(T.metric))D0.metric=T.metric;if(typeof T.foreAft==='boolean')D0.foreAft=T.foreAft;
+    ['w','clear','budget'].forEach(k=>{if(Number.isFinite(+T[k]))D0[k]=+T[k];});if(T.vars)Object.keys(D0.vars).forEach(k=>{const v=T.vars[k];if(!v)return;if(typeof v.on==='boolean')D0.vars[k].on=v.on;['min','max'].forEach(q=>{if(Number.isFinite(+v[q]))D0.vars[k][q]=+v[q];});});}
+  if(o.map&&typeof o.map==='object'){const pts=Array.isArray(o.map.pts)?o.map.pts.filter(q=>Array.isArray(q)&&Number.isFinite(+q[0])&&Number.isFinite(+q[1])).map(q=>[+q[0],+q[1]]).sort((a,b)=>a[0]-b[0]):[];
+    if(pts.length>=2&&pts[pts.length-1][0]-pts[0][0]>=1000){const x0=pts[0][0];s.map.pts=pts.map(q=>[q[0]-x0,q[1]]);}
+    if(Array.isArray(o.map.obs))s.map.obs=o.map.obs.filter(ob=>ob&&OBS[ob.type]).map(ob=>({type:ob.type,x:+ob.x||0,h:Number.isFinite(+ob.h)?+ob.h:OBS[ob.type].h,w:Math.max(2,+ob.w||OBS[ob.type].w),n:Math.max(1,Math.round(+ob.n||1))}));}
+  return s;}
+function load(){try{const t=localStorage.getItem(KEY);if(t)return sanitize(JSON.parse(t));}catch(e){}return clone(DEF);}
+let PS=null;/* preset store, set up near the end */
+let saveT=0;function save(){if(PS)pMark();clearTimeout(saveT);saveT=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}},250);}
+let S=load();
+
+/* ---- Physics lives in physics.js (RoverPhysics). These are thin bindings to the page state. ---- */
+function geo(p,h){return RP.legPose(p,h);}
+function model(){return RP.staticModel(S,ui.h);}
+function sweep(M,s){return RP.travelSweep(S,M,s);}
+
+const svg=$('fbd'),LD=$('layerDraw'),LH=$('layerHandles'),sheet=$('sheet');
+const V={sc:1,ox:0,oy:0,W:800,H:460};
+const X=x=>V.ox+V.sc*x,Y=y=>V.oy-V.sc*y;
+function bbox(){const P=S.legs;let x0=Math.min(0,S.cgx),x1=Math.max(0,S.cgx),y0=Math.min(0,S.cgy),y1=Math.max(0,S.cgy);
+  const add=(x,y)=>{x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);};
+  let bx=0,top=Math.max(0,S.cgy);
+  for(const s of ['L','R']){const p=P[s],sx=s==='L'?-1:1;add(sx*p.x1,p.y1);bx=Math.max(bx,Math.abs(p.x1));top=Math.max(top,p.y1);
+    for(const h of [-p.droop,0,p.hmax,ui.h[s]]){const q=geo(p,h);if(!q)continue;add(sx*q.W[0]-S.rw,q.W[1]-S.rw);add(sx*q.W[0]+S.rw,q.W[1]+S.rw);add(sx*q.P2[0],q.P2[1]);}}
+  add(-(bx+50),top+50);add(bx+50,-35);return{x0,x1,y0,y1};}
+let PAD={l:46,r:46,t:26,b:96};
+const padsFor=W=>W<560?{l:24,r:24,t:18,b:72}:{l:46,r:46,t:26,b:96};
+function fit(){const W=Math.max(300,sheet.clientWidth||800);PAD=padsFor(W);const b=bbox(),bw=Math.max(1,b.x1-b.x0),bh=Math.max(1,b.y1-b.y0),aw=W-PAD.l-PAD.r;let sc=aw/bw;
+  const H=Math.round(clamp(PAD.t+PAD.b+sc*bh,W<560?220:300,640));sc=Math.min(sc,(H-PAD.t-PAD.b)/bh);
+  V.W=W;V.H=H;V.sc=sc;V.ox=PAD.l+aw/2-sc*(b.x0+b.x1)/2;V.oy=PAD.t+sc*b.y1;svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.setAttribute('height',H);}
+function fitIfNeeded(){const W=Math.max(300,sheet.clientWidth||800);if(Math.abs(W-V.W)>2){fit();return;}const b=bbox(),aw=V.W-PAD.l-PAD.r,ah=V.H-PAD.t-PAD.b;const px0=X(b.x0),px1=X(b.x1),py0=Y(b.y1),py1=Y(b.y0);
+  const out=px0<4||px1>V.W-4||py0<4||py1>V.H-40;const small=(px1-px0)<0.55*aw&&(py1-py0)<0.55*ah;if(out||small)fit();}
+const f1=v=>(+v).toFixed(1);
+function ln(x1,y1,x2,y2,c,ex){return '<line x1="'+f1(x1)+'" y1="'+f1(y1)+'" x2="'+f1(x2)+'" y2="'+f1(y2)+'" class="'+c+'"'+(ex||'')+'/>';}
+function tx(x,y,s,c,anc){return '<text x="'+f1(x)+'" y="'+f1(y)+'" class="'+c+'" text-anchor="'+(anc||'start')+'">'+s+'</text>';}
+function arrow(x1,y1,x2,y2,k){if(Math.hypot(x2-x1,y2-y1)<3)return '';return ln(x1,y1,x2,y2,'arr arr-'+k,' marker-end="url(#ah-'+k+')"');}
+function zig(a,b){const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1,nx=-dy/L,ny=dx/L,A=Math.min(7,Math.max(4,L*0.06));const pts=[a,[a[0]+dx*.2,a[1]+dy*.2]];const n=11;for(let i=1;i<n;i++){const t=.2+.6*i/n,s=(i%2?1:-1)*A;pts.push([a[0]+dx*t+nx*s,a[1]+dy*t+ny*s]);}pts.push([a[0]+dx*.8,a[1]+dy*.8],b);return pts.map(v=>f1(v[0])+','+f1(v[1])).join(' ');}
+const HP={};
+function draw(M){
+  const P=S.legs,sc=V.sc,O=[X(0),Y(0)];let h='';
+  let step=50;if(step*sc<9)step=100;if(step*sc<9)step=250;$('capGrid').textContent='Grid '+step+' mm';
+  const gx0=Math.ceil(((0-V.ox)/sc)/step)*step,gx1=(V.W-V.ox)/sc,gy0=Math.floor(((V.oy-0)/sc)/step)*step,gy1=(V.oy-V.H)/sc;
+  for(let x=gx0;x<=gx1;x+=step)h+=ln(X(x),0,X(x),V.H,'gridl');for(let y=gy0;y>=gy1;y-=step)h+=ln(0,Y(y),V.W,Y(y),'gridl');
+  let bx=0,top=Math.max(0,S.cgy);for(const s of ['L','R']){bx=Math.max(bx,Math.abs(P[s].x1));top=Math.max(top,P[s].y1);}bx+=50;top+=50;
+  h+='<rect class="body" x="'+f1(X(-bx))+'" y="'+f1(Y(top))+'" width="'+f1(2*bx*sc)+'" height="'+f1((top+35)*sc)+'" rx="8"/>';
+  if(!M.ok){LD.innerHTML=h;placeHandles(M);return;}
+  const wx={};
+  for(const s of ['L','R']){const r=M.r[s],sx=s==='L'?-1:1;wx[s]=X(sx*r.gn.W[0]);}
+  h+=ln(Math.min(wx.L,wx.R),O[1],Math.max(wx.L,wx.R),O[1],'refl');
+  const fmax=Math.max(M.Wt,...['L','R'].flatMap(s=>[Math.abs(M.r[s].FN),Math.abs(M.r[s].Fh)])),kf=Math.min(88,0.2*Math.min(V.W,V.H))/Math.max(1,fmax),rw=S.rw*sc,compact=V.W<560;
+  for(const s of ['L','R']){const p=P[s],r=M.r[s],q=r.gn,sx=s==='L'?-1:1,anc=s==='L'?'end':'start';
+    const W=[X(sx*q.W[0]),Y(q.W[1])],P1=[X(sx*p.x1),Y(p.y1)],P2=[X(sx*q.P2[0]),Y(q.P2[1])];
+    const tb=r.gb.t*D2R,td=r.gd.t*D2R,R=p.L*sc;
+    const pb=[O[0]+sx*R*Math.cos(tb),O[1]+R*Math.sin(tb)],pd=[O[0]+sx*R*Math.cos(td),O[1]+R*Math.sin(td)];
+    h+='<path class="travelarc" d="M'+f1(pd[0])+' '+f1(pd[1])+' A'+f1(R)+' '+f1(R)+' 0 0 '+(s==='R'?0:1)+' '+f1(pb[0])+' '+f1(pb[1])+'"/>';
+    if(!compact)h+=tx(pb[0]+sx*10,pb[1]-6,'+'+p.hmax,'t-mu',anc)+tx(pd[0]+sx*10,pd[1]+14,'−'+p.droop,'t-mu',anc);
+    const gy=W[1]+rw;h+=ln(W[0]-rw-18,gy,W[0]+rw+18,gy,'ground');for(let i=0;i<6;i++){const x=W[0]-rw-12+i*(2*rw+24)/5;h+=ln(x,gy,x-7,gy+7,'hatch');}
+    if(Math.abs(ui.h[s])>0.5){const q0=r.g0,G=[X(sx*q0.W[0]),Y(q0.W[1])];h+=ln(O[0],O[1],G[0],G[1],'ghost')+'<circle class="ghost" cx="'+f1(G[0])+'" cy="'+f1(G[1])+'" r="'+f1(rw)+'"/>';}
+    h+='<circle class="tire" cx="'+f1(W[0])+'" cy="'+f1(W[1])+'" r="'+f1(rw)+'"/><circle class="hub" cx="'+f1(W[0])+'" cy="'+f1(W[1])+'" r="'+f1(Math.max(3,rw*0.28))+'" opacity=".35"/>';
+    h+=ln(O[0],O[1],W[0],W[1],'leg');
+    const t=q.t*D2R,Pa=[X(sx*p.a*Math.cos(t)),Y(-p.a*Math.sin(t))];if(Math.abs(p.e)>0.5)h+=ln(Pa[0],Pa[1],P2[0],P2[1],'brk');
+    h+=ln(P1[0],P1[1],P2[0],P2[1],'coilax')+'<polyline class="coil" points="'+zig(P1,P2)+'"/>';
+    h+='<circle class="eye" cx="'+f1(P1[0])+'" cy="'+f1(P1[1])+'" r="7"/><circle class="eye" cx="'+f1(P2[0])+'" cy="'+f1(P2[1])+'" r="7"/>';
+    h+=tx(P1[0]-sx*12,P1[1]-10,'1','t-m1',s==='L'?'start':'end')+tx(P2[0]+sx*12,P2[1]-10,'2','t-m2',anc);
+    const ar=58,ae=[O[0]+sx*ar*Math.cos(t),O[1]+ar*Math.sin(t)];
+    h+='<path class="arc" d="M'+f1(O[0]+sx*ar)+' '+f1(O[1])+' A'+ar+' '+ar+' 0 0 '+(s==='R'?(q.t>=0?1:0):(q.t>=0?0:1))+' '+f1(ae[0])+' '+f1(ae[1])+'"/>';
+    const am=t/2;h+=tx(O[0]+sx*(ar+8)*Math.cos(am),O[1]+(ar+8)*Math.sin(am)+5,(s==='L'?'β':'α')+(compact?'':' '+q.t.toFixed(1)+'°'),'t-ink',anc);
+    if(ui.showD&&!compact&&(s==='R'||!S.sym)){const yy=O[1]-(p.y1>=0?16:-16);h+=ln(O[0],yy,P1[0],yy,'dim')+ln(O[0],yy-4,O[0],yy+4,'dim')+ln(P1[0],yy-4,P1[0],yy+4,'dim');
+      h+=ln(P1[0],O[1],P1[0],P1[1]+(p.y1>=0?8:-8),'dimd');h+=tx((O[0]+P1[0])/2,yy-5,'x '+p.x1,'t-m1','middle')+tx(P1[0]-sx*6,(O[1]+P1[1])/2+4,'y '+p.y1,'t-m1',s==='L'?'start':'end');}
+    if(ui.showF){const fl=Math.abs(r.FN)*kf;h+=arrow(W[0],gy+fl+6,W[0],gy+2,'N')+(compact?'':tx(W[0]-sx*10,gy+Math.max(fl,16)/2+12,'FN '+Math.round(r.FN)+' N','t-N',s==='L'?'start':'end'));
+      const fs=r.Fh*kf,u=[sx*q.u[0],-q.u[1]],Fe=[P2[0]+u[0]*fs,P2[1]+u[1]*fs];h+=arrow(P2[0]+u[0]*8,P2[1]+u[1]*8,Fe[0],Fe[1],'S')+(compact?'':tx(Fe[0]-sx*8,Fe[1]+4,'Fs '+Math.round(r.Fh)+' N','t-S',s==='L'?'start':'end'));}
+    if(ui.showR){const pr=[sx*r.pin[0]*kf,-r.pin[1]*kf];h+=arrow(O[0],O[1],O[0]+pr[0],O[1]+pr[1],'R')+tx(O[0]+pr[0]+sx*6,O[1]+pr[1]-6,'R '+Math.round(Math.hypot(r.pin[0],r.pin[1]))+' N','t-R',anc);
+      const ub=[-sx*q.u[0]*r.Fh*kf,q.u[1]*r.Fh*kf];h+=arrow(P1[0],P1[1],P1[0]+ub[0],P1[1]+ub[1],'R');}
+  }
+  if(ui.showF){const c=[X(S.cgx),Y(S.cgy)],fw=M.Wt*kf;h+=arrow(c[0],c[1]+12,c[0],c[1]+12+fw,'W')+tx(c[0]+10,c[1]+12+fw,'Fw '+Math.round(M.Wt)+' N','t-W');}
+  h+='<circle cx="'+f1(O[0])+'" cy="'+f1(O[1])+'" r="5" style="fill:var(--steel)"/>';
+  LD.innerHTML=h;placeHandles(M);}
+
+const HANDLES=[['P1L','m1','Left mount 1 on body'],['P1R','m1','Right mount 1 on body'],['P2L','m2','Left mount 2 on leg'],['P2R','m2','Right mount 2 on leg'],
+  ['WL','w','Left wheel axle'],['WR','w','Right wheel axle'],['BL','lim','Left max bump'],['BR','lim','Right max bump'],['DL','lim','Left max droop'],['DR','lim','Right max droop'],['CG','cg','Centre of gravity']];
+const HEL={};
+(function makeHandles(){for(const[id,kind,label]of HANDLES){const gEl=document.createElementNS('http://www.w3.org/2000/svg','g');
+  gEl.setAttribute('class','hd');gEl.setAttribute('tabindex','0');gEl.setAttribute('role','button');gEl.setAttribute('aria-label',label+'. Drag, or use arrow keys.');gEl.dataset.h=id;
+  let inner='<circle class="hit" r="15"/>';
+  if(kind==='cg')inner+='<circle class="cgo" r="9"/><path class="cgq" d="M0 0L9 0A9 9 0 0 1 0 9Z"/><path class="cgq" d="M0 0L-9 0A9 9 0 0 1 0 -9Z"/><circle class="ring" r="13"/>';
+  else if(kind==='lim')inner+='<rect class="dot-lim" x="-4.5" y="-4.5" width="9" height="9" transform="rotate(45)"/><circle class="ring" r="10"/>';
+  else inner+='<circle class="dot-'+kind+'" r="'+(kind==='w'?5:6)+'"/><circle class="ring" r="11"/>';
+  gEl.innerHTML=inner;LH.appendChild(gEl);HEL[id]=gEl;}})();
+function placeHandles(M){const P=S.legs;const set=(id,x,y)=>{HP[id]=[x,y];const e=HEL[id];if(!Number.isFinite(x)||!Number.isFinite(y)){e.setAttribute('visibility','hidden');return;}e.removeAttribute('visibility');e.setAttribute('transform','translate('+f1(X(x))+' '+f1(Y(y))+')');};
+  for(const s of ['L','R']){const p=P[s],sx=s==='L'?-1:1;set('P1'+s,sx*p.x1,p.y1);
+    const q=geo(p,ui.h[s]),b=geo(p,p.hmax),d=geo(p,-p.droop);
+    set('P2'+s,q?sx*q.P2[0]:NaN,q?q.P2[1]:NaN);set('W'+s,q?sx*q.W[0]:NaN,q?q.W[1]:NaN);set('B'+s,b?sx*b.W[0]:NaN,b?b.W[1]:NaN);set('D'+s,d?sx*d.W[0]:NaN,d?d.W[1]:NaN);}
+  set('CG',S.cgx,S.cgy);}
+
+function setLeg(s,k,v){S.legs[s][k]=v;if(S.sym)S.legs[other(s)][k]=v;}
+function applyPoint(id,x,y,snap){const sn=v=>Math.round(v/snap)*snap;
+  if(id==='CG'){S.cgx=sn(x);S.cgy=sn(y);return;}
+  const s=id.slice(-1),p=S.legs[s],sx=s==='L'?-1:1,xo=x*sx,kind=id.slice(0,-1);
+  if(kind==='P1'){setLeg(s,'x1',sn(xo));setLeg(s,'y1',sn(y));}
+  else if(kind==='P2'){const q=geo(p,ui.h[s]);if(!q)return;const t=q.t*D2R,a=xo*Math.cos(t)-y*Math.sin(t),e=xo*Math.sin(t)+y*Math.cos(t);setLeg(s,'a',clamp(sn(a),5,p.L));setLeg(s,'e',clamp(sn(e),-400,400));}
+  else if(kind==='W'){if(ui.drag==='geom'){const L=clamp(sn(Math.hypot(xo,y)),100,3000);let tc=Math.atan2(-y,Math.max(1,xo));const s0=clamp(Math.sin(tc)+ui.h[s]/L,-0.99,0.99);
+      setLeg(s,'L',L);setLeg(s,'th',Math.round(Math.asin(s0)*R2D*10)/10);if(S.legs[s].a>L)setLeg(s,'a',L);}
+    else{ui.h[s]=clamp(Math.round(y+p.L*Math.sin(p.th*D2R)),-p.droop,p.hmax);}}
+  else if(kind==='B'){setLeg(s,'hmax',Math.max(0,sn(y+p.L*Math.sin(p.th*D2R))));ui.h[s]=Math.min(ui.h[s],S.legs[s].hmax);}
+  else if(kind==='D'){setLeg(s,'droop',Math.max(0,sn(-(y+p.L*Math.sin(p.th*D2R)))));ui.h[s]=Math.max(ui.h[s],-S.legs[s].droop);}
+  if(S.sym&&(kind==='B'||kind==='D')){const o=other(s);ui.h[o]=clamp(ui.h[o],-S.legs[o].droop,S.legs[o].hmax);}}
+function toMM(e){const rc=svg.getBoundingClientRect(),px=(e.clientX-rc.left)*V.W/rc.width,py=(e.clientY-rc.top)*V.H/rc.height;return[(px-V.ox)/V.sc,(V.oy-py)/V.sc];}
+let drag=null;
+svg.addEventListener('pointerdown',e=>{const hEl=e.target.closest('[data-h]');if(!hEl)return;e.preventDefault();drag={id:hEl.dataset.h,pid:e.pointerId};try{svg.setPointerCapture(e.pointerId);}catch(_){}hEl.focus({preventScroll:true});svg.classList.add('dragging');});
+svg.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.pid)return;const[x,y]=toMM(e);applyPoint(drag.id,x,y,e.shiftKey?10:1);update(false);});
+const endDrag=e=>{if(!drag)return;drag=null;svg.classList.remove('dragging');fitIfNeeded();update(false);save();};
+svg.addEventListener('pointerup',endDrag);svg.addEventListener('pointercancel',endDrag);
+LH.addEventListener('keydown',e=>{const hEl=e.target.closest('[data-h]');if(!hEl)return;const d={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,1],ArrowDown:[0,-1]}[e.key];if(!d)return;e.preventDefault();
+  const st=e.shiftKey?10:1,id=hEl.dataset.h,cur=HP[id];if(!cur)return;applyPoint(id,cur[0]+d[0]*st,cur[1]+d[1]*st,1);fitIfNeeded();update(false);save();});
+
+const ROVER=[['m','Rover mass','kg',1,1,500],['share','Weight on this side','%',1,1,100],['cgx','CG x from pivot','mm',5,-2000,2000],['cgy','CG y from pivot','mm',5,-2000,2000],['rw','Wheel radius','mm',5,20,1500]];
+const LEGS=[['L','Leg length','mm',10,50,3000],['th','Start angle below horizontal','°',0.5,-60,85],['x1','Mount 1 x','mm',5,-2000,2000],['y1','Mount 1 y','mm',5,-2000,2000],['a','Mount 2 along leg, a','mm',5,1,3000],['e','Mount 2 offset, e','mm',5,-1000,1000],['hmax','Max bump','mm',5,0,2000],['droop','Max droop','mm',5,0,2000]];
+const COIL=[['ext','Eye-to-eye, extended','mm',1,10,3000],['stroke','Stroke','mm',1,1,2000]];
+const INP=[];
+function mkLabel(txt,unit,forId){const l=document.createElement('label');l.className='k';l.htmlFor=forId;l.textContent=txt+' ';const u=document.createElement('span');u.className='u';u.textContent='('+unit+')';l.appendChild(u);return l;}
+function mkNum(id,step,min,max,get,set){const i=document.createElement('input');i.type='number';i.className='num';i.id=id;i.step=step;i.min=min;i.max=max;i.inputMode='decimal';
+  i.addEventListener('input',()=>{const v=parseFloat(i.value);if(!Number.isFinite(v))return;set(clamp(v,min,max));fixups();fitIfNeeded();update(true);save();});
+  i.addEventListener('change',()=>{i.value=fmtIn(get(),step);});INP.push({el:i,get,step});return i;}
+const fmtIn=(v,st)=>st<1?(+v).toFixed(Math.min(4,Math.ceil(-Math.log10(st)-1e-9))):String(Math.round(v*10)/10);
+ROVER.forEach(([k,lab,u,st,mn,mx])=>{const g=$('gRover');g.appendChild(mkLabel(lab,u,'in-'+k));g.appendChild(mkNum('in-'+k,st,mn,mx,()=>S[k],v=>{S[k]=v;}));});
+function legRows(host,rows){rows.forEach(([k,lab,u,st,mn,mx])=>{host.appendChild(mkLabel(lab,u,'in-L-'+k));['L','R'].forEach(s=>{const el=mkNum('in-'+s+'-'+k,st,mn,mx,()=>S.legs[s][k],v=>setLeg(s,k,v));if(s==='R')el.setAttribute('aria-label',lab+', right leg');host.appendChild(el);});});}
+legRows($('gLegs'),LEGS);legRows($('gCoil'),COIL);
+function fixups(){for(const s of ['L','R']){const p=S.legs[s];if(p.a>p.L)p.a=p.L;ui.h[s]=clamp(ui.h[s],-p.droop,p.hmax);}}
+const MODES={droop:['Max droop is set per leg above','','The spring is at free length (zero force) with the wheel at full droop. Its rate then comes from the ride load and the droop travel alone.'],
+  G:['Load at max bump','× static','The spring reaches max bump when the wheel load is this multiple of its static load.'],
+  freq:['Ride frequency','Hz','Undamped bounce frequency of each corner on its wheel rate. Light off-road vehicles often sit around 1.5 to 2.5 Hz.'],
+  manual:['Spring rate','N/mm','Your chosen spring. Preload is then set so the rover rests at the start angle.']};
+function syncMode(){const m=MODES[S.mode];$('mode').value=S.mode;const lab=$('modeLab'),v=$('modeVal');lab.textContent=m[0]+' ';if(m[1]){const u=document.createElement('span');u.className='u';u.textContent='('+m[1]+')';lab.appendChild(u);}
+  v.hidden=S.mode==='droop';lab.style.gridColumn=S.mode==='droop'?'1 / -1':'';
+  const key={G:'G',freq:'f',manual:'kman'}[S.mode];if(key&&document.activeElement!==v){v.step=S.mode==='manual'?0.1:0.1;v.value=fmtIn(S[key],0.1);}$('modeHint').textContent=m[2];}
+$('mode').addEventListener('change',e=>{S.mode=e.target.value;syncMode();update(true);save();});
+$('modeVal').addEventListener('input',e=>{const v=parseFloat(e.target.value);if(!Number.isFinite(v)||v<=0)return;const key={G:'G',freq:'f',manual:'kman'}[S.mode];if(key){S[key]=v;update(true);save();}});
+function syncInputs(){for(const it of INP){if(document.activeElement!==it.el)it.el.value=fmtIn(it.get(),it.step);}if(dynReady)syncDyn();
+  document.querySelectorAll('[id^="in-L-"]').forEach(el=>el.classList.toggle('linked',S.sym));$('sym').checked=S.sym;$('symTag').textContent=S.sym?'symmetric':'independent';syncMode();}
+
+$('sym').addEventListener('change',e=>{S.sym=e.target.checked;if(S.sym){S.legs.L=clone(S.legs.R);fixups();setStatus('Symmetry on: the left leg now copies the right leg.');}update(true);fitIfNeeded();update(false);save();});
+const setSeg=(a,b,on)=>{$(a).setAttribute('aria-pressed',on?'true':'false');$(b).setAttribute('aria-pressed',on?'false':'true');};
+$('dragGeom').addEventListener('click',()=>{ui.drag='geom';setSeg('dragGeom','dragTravel',true);});
+$('dragTravel').addEventListener('click',()=>{ui.drag='travel';setSeg('dragGeom','dragTravel',false);});
+['showF','showR','showD'].forEach(k=>$(k).addEventListener('change',e=>{ui[k]=e.target.checked;update(false);}));
+$('fitBtn').addEventListener('click',()=>{fit();update(false);});
+['L','R'].forEach(s=>{$('h'+s).addEventListener('input',e=>{ui.h[s]=+e.target.value;update(false);});});
+document.querySelectorAll('[data-ride]').forEach(b=>b.addEventListener('click',()=>{ui.h[b.dataset.ride]=0;update(false);}));
+$('chL').addEventListener('click',()=>{ui.chart='L';setSeg('chL','chR',true);update(false);});
+$('chR').addEventListener('click',()=>{ui.chart='R';setSeg('chL','chR',false);update(false);});
+
+function syncTravel(){for(const s of ['L','R']){const p=S.legs[s],el=$('h'+s);el.min=-p.droop;el.max=p.hmax;el.value=ui.h[s];$('h'+s+'o').textContent=(ui.h[s]>0?'+':'')+Math.round(ui.h[s])+' mm';}}
+
+const n0=v=>Number.isFinite(v)?String(Math.round(v)):'–',n1=v=>Number.isFinite(v)?v.toFixed(1):'–',n2=v=>Number.isFinite(v)?v.toFixed(2):'–',n3=v=>Number.isFinite(v)?v.toFixed(3):'–';
+function both(M,fn,fmt){const a=fn(M.r.L),b=fn(M.r.R);if(fmt(a)===fmt(b))return fmt(b);return 'L '+fmt(a)+' · R '+fmt(b);}
+function renderResults(M){
+  const ch=$('checks');ch.innerHTML='';
+  const msgs=M.msgs.length?M.msgs:[['ok','Geometry, spring and coilover all check out across the full travel.']];
+  msgs.forEach(([lv,t])=>{const d=document.createElement('div');d.className='check';const p=document.createElement('span');p.className='pill '+lv;p.textContent=lv==='ok'?'OK':lv==='warn'?'Check':'Problem';const s=document.createElement('span');s.textContent=t;d.append(p,s);ch.appendChild(d);});
+  if(!M.ok){$('tiles').innerHTML='';$('resTable').innerHTML='';$('strokeBars').innerHTML='';$('charts').innerHTML='';$('sweepTable').innerHTML='';return;}
+  const T=[['Spring rate',both(M,r=>r.k,n2),'N/mm',S.mode==='manual'?'chosen':'from '+({droop:'droop travel',G:'max-bump load',freq:'ride frequency'})[S.mode]],
+    ['Preload at ride',both(M,r=>r.x0,n1),'mm',both(M,r=>r.F0,n0)+' N at ride'],
+    ['Stroke needed',both(M,r=>r.stroke,n1),'mm','full droop to max bump'],
+    ['Load to bottom out',both(M,r=>r.Gb,n2),'× static',both(M,r=>r.Fb/r.gb.IR,n0)+' N at the wheel'],
+    ['Ride frequency',both(M,r=>r.f,n2),'Hz','wheel rate '+both(M,r=>r.kw,n2)+' N/mm']];
+  $('tiles').innerHTML=tilesHTML(T);
+  const L=M.r.L,R=M.r.R;
+  const rows=[['sec','At the drawn pose (1 g, body level)'],['Leg angle (°)',r=>n1(r.gn.t)],['Wheel travel (mm)',(r,s)=>(ui.h[s]>0?'+':'')+Math.round(ui.h[s])],['Wheel load FN (N)',r=>n0(r.FN)],['Spring force needed, Fs (N)',r=>n0(r.Fh)],['Leverage Fs / FN',r=>n2(r.Fh/r.FN)],['Motion ratio (spring / wheel)',r=>n3(r.gn.MR)],['Spring length (mm)',r=>n1(r.gn.l)],['Compression from ride (mm)',r=>n1(r.comp)],['Pin reaction on leg x, y (N)',(r,s)=>n0((s==='L'?-1:1)*r.pin[0])+', '+n0(r.pin[1])],['Pin reaction magnitude (N)',r=>n0(Math.hypot(r.pin[0],r.pin[1]))],
+    ['sec','With the sized spring at this pose'],['Spring force (N)',r=>n0(r.Fspr)],['Wheel load, body held (N)',r=>n0(r.Fwh)],
+    ['sec','Spring and travel'],['Spring force at ride (N)',r=>n0(r.F0)],['Spring force at max bump (N)',r=>n0(r.Fb)],['Spring force at full droop (N)',r=>n0(Math.max(0,r.Fd))],['Spring rate (N/mm)',r=>n2(r.k)],['Preload compression at ride (mm)',r=>n1(r.x0)],['Compression ride → max bump (mm)',r=>n1(r.dB)],['Extension ride → full droop (mm)',r=>n1(r.dD)],['Wheel rate at ride (N/mm)',r=>n2(r.kw)],['Ride frequency (Hz)',r=>n2(r.f)]];
+  let t='<thead><tr><th></th><th>Left β</th><th>Right α</th></tr></thead><tbody>';
+  rows.forEach(row=>{if(row[0]==='sec'){t+='<tr class="sec"><td colspan="3">'+row[1]+'</td></tr>';return;}t+='<tr><td>'+row[0]+'</td><td>'+row[1](L,'L')+'</td><td>'+row[1](R,'R')+'</td></tr>';});
+  $('resTable').innerHTML=t+'</tbody>';
+  $('strokeBars').innerHTML=['L','R'].map(s=>strokeBar(M.r[s],s)).join('');
+  renderCharts(M);}
+function strokeBar(r,s){const c=r.coil,W=Math.max(260,$('strokeBars').clientWidth||420),H=64,pad=14;const lo=Math.min(c.comp,r.gb.l)-6,hi=Math.max(c.ext,r.gd.l)+6;const x=v=>pad+(W-2*pad)*(v-lo)/(hi-lo);
+  const lab=c.status==='ok'?'OK':c.status==='warn'?'Check':'Problem';
+  let g='<rect x="'+f1(x(c.comp))+'" y="20" width="'+f1(x(c.ext)-x(c.comp))+'" height="14" rx="3" fill="var(--grid)" stroke="var(--line)"/>';
+  g+='<rect x="'+f1(x(r.gb.l))+'" y="24" width="'+f1(x(r.gd.l)-x(r.gb.l))+'" height="6" rx="3" fill="var(--accent)"/>';
+  const mk=(v,t,above,anc)=>'<line x1="'+f1(x(v))+'" y1="16" x2="'+f1(x(v))+'" y2="38" stroke="var(--ink2)" stroke-width="1.5"/><text x="'+f1(x(v))+'" y="'+(above?12:52)+'" text-anchor="'+anc+'" font-family="var(--f-mono)" font-size="11" fill="var(--ink2)">'+t+'</text>';
+  g+=mk(r.g0.l,'ride '+r.g0.l.toFixed(0),true,'middle');
+  g+='<text x="'+f1(x(c.comp))+'" y="52" text-anchor="start" font-family="var(--f-mono)" font-size="11" fill="var(--muted)">min '+c.comp.toFixed(0)+'</text><text x="'+f1(x(c.ext))+'" y="52" text-anchor="end" font-family="var(--f-mono)" font-size="11" fill="var(--muted)">max '+c.ext.toFixed(0)+'</text>';
+  return '<div class="sb"><div class="sb-head"><strong>'+(s==='L'?'Left':'Right')+' coilover</strong><span class="pill '+c.status+'">'+lab+'</span></div><div class="hint" style="margin:2px 0 0">'+c.text+' · uses '+Math.round(c.use*100)+'% of stroke · spring '+r.gb.l.toFixed(0)+'–'+r.gd.l.toFixed(0)+' mm</div><svg viewBox="0 0 '+W+' '+H+'" height="64" role="img" aria-label="Coilover length range"><g>'+g+'</g></svg></div>';}
+
+function niceStep(span,n){const raw=span/Math.max(1,n),p=Math.pow(10,Math.floor(Math.log10(raw))),m=raw/p;return(m<1.5?1:m<3?2:m<7?5:10)*p;}
+function ticks(a,b,n){const st=niceStep(b-a,n),out=[];for(let v=Math.ceil(a/st)*st;v<=b+st*1e-6;v+=st)out.push(Math.abs(v)<st*1e-9?0:v);return{out,st};}
+function lineChart(host,cfg){
+  const box=document.createElement('div');box.className='chart';box.dataset.lay='chart:'+cfg.title;
+  const h4=document.createElement('h4');h4.textContent=cfg.title;const sub=document.createElement('p');sub.className='sub';sub.textContent=cfg.sub;box.append(h4,sub);
+  if(cfg.series.length>1){const lg=document.createElement('div');lg.className='legend';cfg.series.forEach(se=>{const sp=document.createElement('span');const i=document.createElement('i');i.style.borderTopColor=se.color;if(se.dash)i.className='d';sp.append(i,document.createTextNode(se.name));lg.appendChild(sp);});box.appendChild(lg);}
+  host.appendChild(box);
+  return ()=>plotChart(box,cfg);}
+function plotChart(box,cfg){
+  const W=Math.max(260,box.clientWidth||320),H=210,m={l:48,r:12,t:10,b:34};
+  const xs=cfg.series[0].pts.map(p=>p[0]);const xa=xs[0],xb=xs[xs.length-1];
+  let ya=Infinity,yb=-Infinity;cfg.series.forEach(se=>se.pts.forEach(p=>{if(Number.isFinite(p[1])){ya=Math.min(ya,p[1]);yb=Math.max(yb,p[1]);}}));(cfg.refs||[]).forEach(r=>{ya=Math.min(ya,r.y);yb=Math.max(yb,r.y);});
+  if(!Number.isFinite(ya)){ya=0;yb=1;}if(cfg.zero){ya=Math.min(ya,0);}const span=Math.max(yb-ya,Math.abs(yb)*0.08,1e-3);ya-=span*0.06;yb+=span*0.08;if(cfg.zero&&ya<0&&Math.min(...cfg.series.flatMap(se=>se.pts.map(p=>p[1])))>=0)ya=0;
+  const yt=ticks(ya,yb,4);ya=Math.min(ya,yt.out[0]);yb=Math.max(yb,yt.out[yt.out.length-1]);
+  const X=v=>m.l+(W-m.l-m.r)*(v-xa)/(xb-xa),Y=v=>m.t+(H-m.t-m.b)*(1-(v-ya)/(yb-ya));
+  const dec=yt.st<0.01?3:yt.st<0.1?2:yt.st<1?1:0;
+  let s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+cfg.title+' versus wheel travel">';
+  yt.out.forEach(v=>{s+='<line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+f1(Y(v))+'" y2="'+f1(Y(v))+'" stroke="var(--gridline)" stroke-width="1"/><text x="'+(m.l-6)+'" y="'+f1(Y(v)+4)+'" text-anchor="end" font-family="var(--f-mono)" font-size="11" fill="var(--muted)">'+v.toFixed(dec)+'</text>';});
+  const xt=ticks(xa,xb,6);xt.out.forEach(v=>{s+='<text x="'+f1(X(v))+'" y="'+(H-m.b+16)+'" text-anchor="middle" font-family="var(--f-mono)" font-size="11" fill="var(--muted)">'+(v>0?'+':'')+Math.round(v)+'</text>';});
+  s+='<line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+(H-m.b)+'" y2="'+(H-m.b)+'" stroke="var(--axis)" stroke-width="1"/>';
+  if(xa<0&&xb>0)s+='<line x1="'+f1(X(0))+'" x2="'+f1(X(0))+'" y1="'+m.t+'" y2="'+(H-m.b)+'" stroke="var(--axis)" stroke-width="1"/><text x="'+f1(X(0)+4)+'" y="'+(m.t+10)+'" font-family="var(--f-mono)" font-size="11" fill="var(--muted)">ride</text>';
+  s+='<text x="'+f1((m.l+W-m.r)/2)+'" y="'+(H-4)+'" text-anchor="middle" font-size="11" fill="var(--muted)">wheel travel (mm)</text>';
+  (cfg.refs||[]).forEach(r=>{s+='<line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+f1(Y(r.y))+'" y2="'+f1(Y(r.y))+'" stroke="var(--ref)" stroke-width="1" stroke-dasharray="5 4"/><text x="'+(W-m.r-2)+'" y="'+f1(Y(r.y)-4)+'" text-anchor="end" font-size="11" fill="var(--ink2)">'+r.label+'</text>';});
+  cfg.series.forEach(se=>{const pts=se.pts.filter(p=>Number.isFinite(p[1]));if(!pts.length)return;s+='<polyline fill="none" stroke="'+se.color+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"'+(se.dash?' stroke-dasharray="6 4"':'')+' points="'+pts.map(p=>f1(X(p[0]))+','+f1(Y(p[1]))).join(' ')+'"/>';});
+  if(Number.isFinite(cfg.cur)){cfg.series.forEach(se=>{const v=interp(se.pts,cfg.cur);if(Number.isFinite(v))s+='<circle cx="'+f1(X(cfg.cur))+'" cy="'+f1(Y(v))+'" r="4.5" fill="'+se.color+'" stroke="var(--panel)" stroke-width="2"/>';});}
+  s+='<line class="xh" x1="0" x2="0" y1="'+m.t+'" y2="'+(H-m.b)+'" stroke="var(--ink2)" stroke-width="1" visibility="hidden"/><g class="xd"></g><rect class="hitr" x="'+m.l+'" y="'+m.t+'" width="'+(W-m.l-m.r)+'" height="'+(H-m.t-m.b)+'" fill="transparent"/></svg>';
+  box.insertAdjacentHTML('beforeend',s);
+  const sv=box.querySelector('svg'),xh=sv.querySelector('.xh'),xd=sv.querySelector('.xd'),tip=document.createElement('div');tip.className='tip';tip.hidden=true;box.appendChild(tip);
+  const move=e=>{const rc=sv.getBoundingClientRect(),px=(e.clientX-rc.left)*W/rc.width;const v=xa+(xb-xa)*clamp((px-m.l)/(W-m.l-m.r),0,1);
+    let bi=0,bd=Infinity;xs.forEach((x,i)=>{const d=Math.abs(x-v);if(d<bd){bd=d;bi=i;}});const xv=xs[bi];
+    xh.setAttribute('x1',f1(X(xv)));xh.setAttribute('x2',f1(X(xv)));xh.setAttribute('visibility','visible');
+    xd.innerHTML=cfg.series.map(se=>{const y=se.pts[bi][1];return Number.isFinite(y)?'<circle cx="'+f1(X(xv))+'" cy="'+f1(Y(y))+'" r="4" fill="'+se.color+'" stroke="var(--panel)" stroke-width="2"/>':'';}).join('');
+    tip.textContent='';const hd=document.createElement('div');hd.textContent='Travel '+(xv>0?'+':'')+xv.toFixed(1)+' mm';tip.appendChild(hd);
+    cfg.series.forEach(se=>{const y=se.pts[bi][1];const r=document.createElement('div');r.className='r';const i=document.createElement('i');i.style.borderTopColor=se.color;const b=document.createElement('b');b.textContent=Number.isFinite(y)?y.toFixed(cfg.dec):'–';r.append(i,b,document.createTextNode(' '+cfg.unit+' · '+se.name));tip.appendChild(r);});
+    tip.hidden=false;const br=box.getBoundingClientRect(),bw=box.clientWidth,tw=tip.offsetWidth,ox=rc.left-br.left+X(xv)*rc.width/W;tip.style.left=(ox+12+tw>bw?clamp(ox-tw-12,0,bw-tw):ox+12)+'px';tip.style.top=(rc.top-br.top+8)+'px';};
+  sv.addEventListener('pointermove',move);sv.addEventListener('pointerleave',()=>{tip.hidden=true;xh.setAttribute('visibility','hidden');xd.innerHTML='';});}
+function interp(pts,x){for(let i=1;i<pts.length;i++){if(x<=pts[i][0]){const a=pts[i-1],b=pts[i],t=(x-a[0])/((b[0]-a[0])||1);return a[1]+(b[1]-a[1])*t;}}return pts.length?pts[pts.length-1][1]:NaN;}
+const cssv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let lastRows=null;
+function renderCharts(M){const host=$('charts');if(host.offsetParent===null)return;host.innerHTML='';const s=ui.chart,rows=sweep(M,s),r=M.r[s],p=S.legs[s];lastRows=rows;
+  const c1=cssv('--s1'),c2=cssv('--s2'),nm=s==='L'?'left':'right';
+  const jobs=[];
+  jobs.push(lineChart(host,{title:'Spring force',sub:'Sized spring vs the force needed to hold 1 g, '+nm+' leg',unit:'N',dec:0,zero:true,cur:ui.h[s],series:[{name:'Sized spring',color:c1,pts:rows.map(q=>[q.h,q.Fs])},{name:'Needed for 1 g',color:c2,dash:true,pts:rows.map(q=>[q.h,q.Fh])}]}));
+  jobs.push(lineChart(host,{title:'Wheel load from the spring',sub:'Body held level, '+nm+' leg',unit:'N',dec:0,zero:true,cur:ui.h[s],series:[{name:'Wheel load',color:c1,pts:rows.map(q=>[q.h,q.Fw])}],refs:[{y:r.FN0,label:'static '+Math.round(r.FN0)+' N'}]}));
+  jobs.push(lineChart(host,{title:'Spring length',sub:'Eye to eye, against the shock limits, '+nm+' leg',unit:'mm',dec:1,cur:ui.h[s],series:[{name:'Spring length',color:c1,pts:rows.map(q=>[q.h,q.l])}],refs:[{y:p.ext,label:'extended '+p.ext},{y:p.ext-p.stroke,label:'compressed '+(p.ext-p.stroke)}]}));
+  jobs.push(lineChart(host,{title:'Motion ratio',sub:'Spring travel per mm of wheel travel, '+nm+' leg',unit:'',dec:3,cur:ui.h[s],series:[{name:'Motion ratio',color:c1,pts:rows.map(q=>[q.h,q.MR])}]}));
+  jobs.forEach(j=>j());
+  const pick=[];const N=rows.length-1;for(let i=0;i<=10;i++)pick.push(rows[Math.round(i*N/10)]);
+  let t='<thead><tr><th>Travel (mm)</th><th>Length (mm)</th><th>Compression (mm)</th><th>Motion ratio</th><th>Needed for 1 g (N)</th><th>Sized spring (N)</th><th>Wheel load (N)</th></tr></thead><tbody>';
+  pick.forEach(q=>{t+='<tr><td>'+(q.h>0?'+':'')+q.h.toFixed(1)+'</td><td>'+n1(q.l)+'</td><td>'+n1(q.comp)+'</td><td>'+n3(q.MR)+'</td><td>'+n0(q.Fh)+'</td><td>'+n0(q.Fs)+'</td><td>'+n0(q.Fw)+'</td></tr>';});
+  $('sweepTable').innerHTML=t+'</tbody>';document.querySelector('details.sweep summary').textContent='Sweep table, '+nm+' leg';}
+
+let M=null;
+function update(){M=model();draw(M);syncTravel();syncInputs();renderResults(M);if(dynReady){updateDerived();markStale();if(!$('tab-terrain').hidden&&!TV.live&&!TV.playing)tDraw();if(!$('tab-drop').hidden&&!DV.playing&&!DV.busy)dDraw();}}
+
+let dl=null;const standalone=!(window.claude&&typeof window.claude.use==='function');
+function blobSave(filename,data){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:filename.endsWith('.csv')?'text/csv':'application/json'}));a.download=filename;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);}
+if(standalone)document.querySelectorAll('[data-dl]').forEach(b=>{b.hidden=false;});
+else(async()=>{try{dl=await window.claude.use('downloads');}catch(e){dl=null;}document.querySelectorAll('[data-dl]').forEach(b=>{b.hidden=!dl;});})();
+function setStatus(t){$('fileStatus').textContent=t;}
+async function offer(filename,data,say){say=say||setStatus;if(standalone){try{blobSave(filename,data);say('Saved '+filename+'.');}catch(e){say('Your browser blocked the download. Use Copy JSON instead.');}return;}if(!dl){say('Downloads are not available in this view. Use Copy JSON instead.');return;}
+  try{await dl.save({filename,data});say('Saved '+filename+'.');}catch(e){const c=e&&e.code;if(c==='declined')say('Download cancelled.');else if(c==='rate_limited')say('A download prompt is already open.');else say('Downloads are not available in this view. Use Copy JSON instead.');}}
+$('dlJson').addEventListener('click',()=>offer('rover-suspension-design.json',JSON.stringify(S,null,2)));
+$('dlCsv').addEventListener('click',()=>{if(!M||!M.ok){setStatus('Fix the geometry problems first.');return;}const out=[];for(const s of ['L','R']){sweep(M,s).forEach(q=>out.push([s==='L'?'left':'right',q.h.toFixed(2),q.l.toFixed(2),q.comp.toFixed(2),q.MR.toFixed(4),q.FN.toFixed(1),q.Fh.toFixed(1),Number.isFinite(q.Fs)?q.Fs.toFixed(1):'',Number.isFinite(q.Fw)?q.Fw.toFixed(1):''].join(',')));}
+  offer('rover-suspension-sweep.csv','leg,travel_mm,spring_length_mm,compression_mm,motion_ratio,wheel_load_1g_N,spring_force_1g_N,sized_spring_force_N,wheel_load_sized_spring_N\n'+out.join('\n')+'\n');});
+$('copyJson').addEventListener('click',()=>{const txt=JSON.stringify(S,null,2),ta=$('jsonFallback');const fb=()=>{ta.hidden=false;ta.value=txt;ta.focus();ta.select();setStatus('Copy the selected JSON.');};
+  try{navigator.clipboard.writeText(txt).then(()=>{ta.hidden=true;setStatus('Design JSON copied.');}).catch(fb);}catch(e){fb();}});
+$('importFile').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{S=sanitize(JSON.parse(rd.result));ui.h={L:0,R:0};fixups();resetDyn();fit();update(true);if(PS){PS.active=null;pPersist();pRender();}save();setStatus('Loaded '+f.name+'.');}catch(err){setStatus('That file is not a design JSON from this tool.');}e.target.value='';};rd.readAsText(f);});
+let resetArm=0;$('resetBtn').addEventListener('click',()=>{const b=$('resetBtn');if(Date.now()-resetArm<4000){S=clone(DEF);ui.h={L:0,R:0};resetDyn();fit();update(true);if(PS){PS.active=PBUILTIN.id;pPersist();pRender();}save();b.textContent='Reset to defaults';resetArm=0;setStatus('Defaults restored.');return;}
+  resetArm=Date.now();b.textContent='Click again to reset';setTimeout(()=>{if(Date.now()-resetArm>=3900){b.textContent='Reset to defaults';}},4000);});
+
+const DYN={legKin:RP.legKinematics,coil:RP.coiloverForce,Sim:RP.Simulation,KEYS:RP.RECORD_KEYS};
+let TER=null;function terrain(){return TER||(TER=RP.buildTerrain(S.map));}
+function groundWithout(x,skip){return terrain().groundWithout(x,skip);}
+function vehicleFromState(){return RP.buildVehicle(S,model());}
+function icRun(Vh,T){return RP.initialRunState(Vh,T,S.run.x0/1000,S.run.v0);}
+const icDrop=RP.initialDropState,flatTer=RP.flatTerrain,wheelXs=RP.wheelXs;
+function dynSig(){return JSON.stringify([S.legs,S.m,S.share,S.cgx,S.cgy,S.rw,S.dyn,S.mode,S.G,S.f,S.kman]);}
+
+/* ===================== Drawing ===================== */
+function palette(){const cs=getComputedStyle(document.documentElement),g2=n=>cs.getPropertyValue(n).trim();
+  const o={};['sheet','grid','line','ink','ink2','muted','steel','tire','earth','earth-line','accent','fN','fW','fS','m1','m2','bad','warn','good','s1','s2','panel'].forEach(k=>o[k]=g2('--'+k));return o;}
+function sizeCanvas(cv){const dpr=window.devicePixelRatio||1,w=Math.max(10,cv.clientWidth),h=Math.max(10,cv.clientHeight);
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);}
+  const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);return{ctx,W:w,H:h};}
+function camFns(cam,H){return{sx:x=>(x-cam.x0)*cam.s,sy:y=>H-(y-cam.y0)*cam.s*cam.vex,wx:px=>cam.x0+px/cam.s,wy:py=>cam.y0+(H-py)/(cam.s*cam.vex)};}
+function drawGround(ctx,W,H,cam,C,hfun,lenM){const f=camFns(cam,H);ctx.fillStyle=C.sheet;ctx.fillRect(0,0,W,H);
+  let step=1;if(cam.s>320)step=0.25;else if(cam.s>160)step=0.5;else if(cam.s<40)step=2;
+  ctx.strokeStyle=C.grid;ctx.lineWidth=1;ctx.fillStyle=C.muted;ctx.font='11px '+getComputedStyle(document.body).getPropertyValue('--f-mono');
+  const xa=Math.floor(f.wx(0)/step)*step,xb=f.wx(W);for(let x=xa;x<=xb;x+=step){const px=Math.round(f.sx(x))+0.5;ctx.beginPath();ctx.moveTo(px,0);ctx.lineTo(px,H);ctx.stroke();}
+  const ya=Math.floor(f.wy(H)/step)*step,yb=f.wy(0);for(let y=ya;y<=yb;y+=step){const py=Math.round(f.sy(y))+0.5;ctx.beginPath();ctx.moveTo(0,py);ctx.lineTo(W,py);ctx.stroke();}
+  ctx.beginPath();ctx.moveTo(0,H);for(let px=0;px<=W+2;px+=2){ctx.lineTo(px,f.sy(hfun(f.wx(px))));}ctx.lineTo(W,H);ctx.closePath();ctx.fillStyle=C.earth;ctx.fill();
+  ctx.beginPath();for(let px=0;px<=W+2;px+=2){const py=f.sy(hfun(f.wx(px)));if(px===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);}ctx.strokeStyle=C['earth-line'];ctx.lineWidth=1.5;ctx.stroke();
+  ctx.fillStyle=C.muted;for(let x=Math.ceil(f.wx(0)/step)*step;x<=xb;x+=step){if(Math.abs(x%1)>1e-6&&step<1&&Math.abs((x*2)%1)>1e-6)continue;ctx.fillText(x.toFixed(step<1?1:0)+' m',f.sx(x)+3,H-5);}
+  if(lenM!=null){[[0,'start'],[lenM,'end']].forEach(([x])=>{const px=f.sx(x);if(px<-5||px>W+5)return;ctx.strokeStyle=C.muted;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(px,0);ctx.lineTo(px,H);ctx.stroke();ctx.setLineDash([]);});}
+  return f;}
+function flagAt(ctx,f,x,y,C,label){const px=f.sx(x),py=f.sy(y);ctx.strokeStyle=C.good;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px,py-34);ctx.stroke();ctx.fillStyle=C.good;ctx.beginPath();ctx.moveTo(px,py-34);ctx.lineTo(px+16,py-28);ctx.lineTo(px,py-22);ctx.closePath();ctx.fill();
+  if(label){ctx.fillStyle=C.ink2;ctx.fillText(label,px+4,py-38);}}
+function drawRover(ctx,f,cam,Vh,ps,C,opt){const c=Math.cos(ps.ph),s=Math.sin(ps.ph),sc=cam.s;
+  const w=(bx,by)=>[f.sx(ps.x+c*bx-s*by),f.sy(ps.y+s*bx+c*by)];
+  let bx=0,top=Math.max(0,Vh.cg[1]);Vh.legs.forEach(lg=>{bx=Math.max(bx,Math.abs(lg.x1));top=Math.max(top,lg.y1);});bx+=0.05;top+=0.05;
+  const pl=[w(-bx,-0.035),w(bx,-0.035),w(bx,top),w(-bx,top)];ctx.beginPath();pl.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=C.grid;ctx.fill();ctx.strokeStyle=C.ink2;ctx.lineWidth=1;ctx.stroke();
+  const lw=Math.max(2.5,Math.min(8,0.022*sc)),rr=Vh.r*sc;
+  for(let i=0;i<2;i++){const lg=Vh.legs[i],th=ps.th[i],K=DYN.legKin(lg,th),A=w(K.bx,K.by),O=w(0,0),P1=w(lg.s*lg.x1,lg.y1),P2=w(K.p2x,K.p2y),Pa=w(lg.s*lg.a*Math.cos(th),-lg.a*Math.sin(th));
+    ctx.strokeStyle=C.tire;ctx.lineWidth=Math.max(2,Math.min(6,0.018*sc));ctx.beginPath();ctx.arc(A[0],A[1],rr,0,2*Math.PI);ctx.stroke();
+    ctx.lineWidth=1.2;for(let k=0;k<3;k++){const an=ps.psi[i]+k*2*Math.PI/3;ctx.beginPath();ctx.moveTo(A[0],A[1]);ctx.lineTo(A[0]+Math.cos(an)*rr*0.85,A[1]+Math.sin(an)*rr*0.85);ctx.stroke();}
+    ctx.strokeStyle=C.steel;ctx.lineCap='round';ctx.lineWidth=lw;ctx.beginPath();ctx.moveTo(O[0],O[1]);ctx.lineTo(A[0],A[1]);ctx.stroke();
+    if(Math.abs(lg.e)>0.0005){ctx.lineWidth=lw*0.7;ctx.beginPath();ctx.moveTo(Pa[0],Pa[1]);ctx.lineTo(P2[0],P2[1]);ctx.stroke();}
+    const l=K.l,st=l<lg.lmin?C.bad:l>lg.lmax+1e-4?C.warn:C.ink2;ctx.strokeStyle=st;ctx.lineWidth=1.6;ctx.lineJoin='round';ctx.beginPath();
+    const dx=P2[0]-P1[0],dy=P2[1]-P1[1],L=Math.hypot(dx,dy)||1,nx=-dy/L,ny=dx/L,Am=Math.max(3,Math.min(7,L*0.07));ctx.moveTo(P1[0],P1[1]);ctx.lineTo(P1[0]+dx*.2,P1[1]+dy*.2);
+    for(let k=1;k<11;k++){const t=.2+.6*k/11,sg=(k%2?1:-1)*Am;ctx.lineTo(P1[0]+dx*t+nx*sg,P1[1]+dy*t+ny*sg);}ctx.lineTo(P1[0]+dx*.8,P1[1]+dy*.8);ctx.lineTo(P2[0],P2[1]);ctx.stroke();
+    [P1,P2].forEach((p,j)=>{ctx.beginPath();ctx.arc(p[0],p[1],3.5,0,2*Math.PI);ctx.fillStyle=j?C.m2:C.m1;ctx.fill();});
+    ctx.fillStyle=C.steel;ctx.beginPath();ctx.arc(A[0],A[1],Math.max(2.5,rr*0.12),0,2*Math.PI);ctx.fill();
+    if(opt&&opt.forces&&ps.cp&&Number.isFinite(ps.cp[i*2])){const kf=56/Math.max(50,Vh.side*Vh.g/2),fx=ps.f[i*2],fy=ps.f[i*2+1],qx=f.sx(ps.cp[i*2]),qy=f.sy(ps.cp[i*2+1]),ex=qx-fx*kf,ey=qy+fy*kf*cam.vex;
+      arrowC(ctx,ex,ey,qx,qy,C.fN,2.5);ctx.fillStyle=C.fN;ctx.fillText(Math.round(Math.hypot(fx,fy))+' N',ex+(i?6:-46),ey+12);}}
+  const G=w(Vh.cg[0],Vh.cg[1]);ctx.beginPath();ctx.arc(G[0],G[1],6,0,2*Math.PI);ctx.fillStyle=C.sheet;ctx.fill();ctx.strokeStyle=C.fW;ctx.lineWidth=1.5;ctx.stroke();
+  ctx.fillStyle=C.fW;ctx.beginPath();ctx.moveTo(G[0],G[1]);ctx.arc(G[0],G[1],6,0,Math.PI/2);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(G[0],G[1]);ctx.arc(G[0],G[1],6,Math.PI,1.5*Math.PI);ctx.closePath();ctx.fill();
+  const O=w(0,0);ctx.fillStyle=C.steel;ctx.beginPath();ctx.arc(O[0],O[1],3.5,0,2*Math.PI);ctx.fill();ctx.lineCap='butt';}
+function arrowC(ctx,x1,y1,x2,y2,col,lw){const a=Math.atan2(y2-y1,x2-x1),L=Math.hypot(x2-x1,y2-y1);if(L<4)return;ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=lw;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2-Math.cos(a)*8,y2-Math.sin(a)*8);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-Math.cos(a-0.4)*10,y2-Math.sin(a-0.4)*10);ctx.lineTo(x2-Math.cos(a+0.4)*10,y2-Math.sin(a+0.4)*10);ctx.closePath();ctx.fill();}
+function poseFromRec(R,i){return{t:R.t[i],x:R.x[i],y:R.y[i],ph:R.ph[i],th:[R.th0[i],R.th1[i]],psi:[R.ps0[i],R.ps1[i]],cp:[R.cpx0[i],R.cpy0[i],R.cpx1[i],R.cpy1[i]],f:[R.fx0[i],R.fy0[i],R.fx1[i],R.fy1[i]]};}
+function poseFromState(st){return{x:st[0],y:st[1],ph:st[2],th:[st[3],st[4]],psi:[st[12],st[13]],cp:null,f:null};}
+function idxAt(R,t){const a=R.t;let lo=0,hi=a.length-1;if(hi<0)return 0;if(t<=a[0])return 0;if(t>=a[hi])return hi;while(hi-lo>1){const m=(lo+hi)>>1;if(a[m]<=t)lo=m;else hi=m;}return t-a[lo]<a[hi]-t?lo:hi;}
+
+/* ===================== Readouts, tiles, charts ===================== */
+function readoutsHTML(Vh,R,i){if(!R||!R.t.length)return'';const lg=Vh.legs,row=(lab,fn)=>'<tr><td>'+lab+'</td><td>'+fn(0)+'</td><td>'+fn(1)+'</td></tr>';
+  const bar=j=>{const L=lg[j],l=R['l'+j][i],p=clamp((L.lmax-l)/(L.lmax-L.lmin),0,1)*100,pr=clamp((L.lmax-L.l0)/(L.lmax-L.lmin),0,1)*100;return '<span class="tbar'+(l<L.lmin||l>L.lmax+1e-4?' hit':'')+'"><b style="left:'+pr.toFixed(1)+'%"></b><i style="left:'+p.toFixed(1)+'%"></i></span>';};
+  let h='<div class="ro-head"><span>t <b>'+R.t[i].toFixed(2)+' s</b></span><span>speed <b>'+R.v[i].toFixed(2)+' m/s</b></span><span>throttle <b>'+Math.round(R.u[i]*100)+'%</b></span><span>pitch <b>'+(R.ph[i]*R2D).toFixed(1)+'°</b></span><span>load factor <b>'+R.nza[i].toFixed(2)+' g</b></span></div><table class="ro"><thead><tr><th></th><th>Rear β</th><th>Front α</th></tr></thead><tbody>';
+  h+=row('Wheel load (N)',j=>Math.round(R['N'+j+'a'][i]));
+  h+=row('Coilover travel from ride (mm)',j=>(1000*(lg[j].l0-R['l'+j][i])).toFixed(1)+bar(j));
+  h+=row('Coilover force (N)',j=>Math.round(R['F'+j+'a'][i])+(R['Fb'+j][i]>0.5?' (stop)':''));
+  h+=row('Motor torque (N·m)',j=>R['T'+j][i].toFixed(2));
+  h+=row('Wheel slip (m/s)',j=>R['sl'+j][i].toFixed(2));
+  return h+'</tbody></table>';}
+function decim(t,v,maxN){const n=t.length;if(n<=maxN)return t.map((x,i)=>[x,v[i]]);const B=Math.floor(maxN/2),out=[];for(let b=0;b<B;b++){const a=Math.floor(b*n/B),e=Math.max(a+1,Math.floor((b+1)*n/B));let mi=a,ma=a;for(let i=a;i<e;i++){if(v[i]<v[mi])mi=i;if(v[i]>v[ma])ma=i;}if(mi<ma){out.push([t[mi],v[mi]],[t[ma],v[ma]]);}else{out.push([t[ma],v[ma]],[t[mi],v[mi]]);}}return out;}
+function timeCharts(host,R,defs,onSeek){host.innerHTML='';const objs=[];const n=R.t.length;if(!n)return{cursor(){}};
+  defs.forEach(df=>{const box=document.createElement('div');box.className='chart';if(!host.dataset.lay)box.dataset.lay='chart:'+df.title;const h4=document.createElement('h4');h4.textContent=df.title;const sub=document.createElement('p');sub.className='sub';sub.textContent=df.sub;box.append(h4,sub);
+    if(df.series.length>1){const lg=document.createElement('div');lg.className='legend';df.series.forEach(se=>{const sp=document.createElement('span');const i=document.createElement('i');i.style.borderTopColor=se.color;if(se.dash)i.className='d';sp.append(i,document.createTextNode(se.name));lg.appendChild(sp);});box.appendChild(lg);}
+    host.appendChild(box);objs.push({box,df});});
+  const t=R.t,tEnd=t[n-1]||1;
+  objs.forEach(o=>{const df=o.df,box=o.box,W=Math.max(260,box.clientWidth||320),H=200,m={l:50,r:12,t:10,b:30};
+    const vals=df.series.map(se=>{const a=new Float64Array(n);for(let i=0;i<n;i++)a[i]=se.get(i);return a;});
+    let ya=Infinity,yb=-Infinity;vals.forEach(a=>a.forEach(v=>{if(Number.isFinite(v)){if(v<ya)ya=v;if(v>yb)yb=v;}}));(df.refs||[]).forEach(r=>{if(r.y<ya)ya=r.y;if(r.y>yb)yb=r.y;});
+    if(!Number.isFinite(ya)){ya=0;yb=1;}if(df.zero){ya=Math.min(ya,0);yb=Math.max(yb,0);}let span=Math.max(yb-ya,Math.abs(yb)*0.05,1e-3);if(df.minSpan&&span<df.minSpan){const mid=(ya+yb)/2;ya=mid-df.minSpan/2;yb=mid+df.minSpan/2;span=df.minSpan;}ya-=span*0.06;yb+=span*0.08;
+    const yt=ticks(ya,yb,4),dec=yt.st<0.01?3:yt.st<0.1?2:yt.st<1?1:0;
+    const X=v=>m.l+(W-m.l-m.r)*v/tEnd,Y=v=>m.t+(H-m.t-m.b)*(1-(v-ya)/(yb-ya));o.X=X;
+    let sv='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+df.title+' over time">';
+    yt.out.forEach(v=>{sv+='<line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+f1(Y(v))+'" y2="'+f1(Y(v))+'" stroke="var(--gridline)"/><text x="'+(m.l-6)+'" y="'+f1(Y(v)+4)+'" text-anchor="end" font-family="var(--f-mono)" font-size="11" fill="var(--muted)">'+v.toFixed(dec)+'</text>';});
+    ticks(0,tEnd,6).out.forEach(v=>{sv+='<text x="'+f1(X(v))+'" y="'+(H-m.b+15)+'" text-anchor="middle" font-family="var(--f-mono)" font-size="11" fill="var(--muted)">'+(+v.toFixed(2))+'</text>';});
+    sv+='<line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+(H-m.b)+'" y2="'+(H-m.b)+'" stroke="var(--axis)"/><text x="'+(W-m.r)+'" y="'+(H-2)+'" text-anchor="end" font-size="11" fill="var(--muted)">time (s)</text>';
+    (df.refs||[]).forEach(r=>{sv+='<line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+f1(Y(r.y))+'" y2="'+f1(Y(r.y))+'" stroke="var(--ref)" stroke-dasharray="5 4"/><text x="'+(W-m.r-2)+'" y="'+f1(Y(r.y)-4)+'" text-anchor="end" font-size="11" fill="var(--ink2)">'+r.label+'</text>';});
+    df.series.forEach((se,k)=>{const pts=decim(t,vals[k],1400).filter(p=>Number.isFinite(p[1]));sv+='<polyline fill="none" stroke="'+se.color+'" stroke-width="'+(n>3000?1.5:2)+'" stroke-linejoin="round"'+(se.dash?' stroke-dasharray="6 4"':'')+' points="'+pts.map(p=>f1(X(p[0]))+','+f1(Y(p[1]))).join(' ')+'"/>';});
+    sv+='<line class="cur" x1="'+m.l+'" x2="'+m.l+'" y1="'+m.t+'" y2="'+(H-m.b)+'" stroke="var(--accent)" stroke-width="1.5"/><line class="xh" y1="'+m.t+'" y2="'+(H-m.b)+'" stroke="var(--ink2)" visibility="hidden"/><g class="xd"></g><rect x="'+m.l+'" y="'+m.t+'" width="'+(W-m.l-m.r)+'" height="'+(H-m.t-m.b)+'" fill="transparent" style="cursor:crosshair"/></svg>';
+    box.insertAdjacentHTML('beforeend',sv);const svg2=box.querySelector('svg');o.cur=svg2.querySelector('.cur');const xh=svg2.querySelector('.xh'),xd=svg2.querySelector('.xd'),tip=document.createElement('div');tip.className='tip';tip.hidden=true;box.appendChild(tip);
+    const tAt=e=>{const rc=svg2.getBoundingClientRect(),px=(e.clientX-rc.left)*W/rc.width;return clamp((px-m.l)/(W-m.l-m.r),0,1)*tEnd;};
+    svg2.addEventListener('pointermove',e=>{const tt=tAt(e),i=idxAt(R,tt),xv=X(t[i]),rc=svg2.getBoundingClientRect();xh.setAttribute('x1',f1(xv));xh.setAttribute('x2',f1(xv));xh.setAttribute('visibility','visible');
+      xd.innerHTML=df.series.map((se,k)=>Number.isFinite(vals[k][i])?'<circle cx="'+f1(xv)+'" cy="'+f1(Y(vals[k][i]))+'" r="4" fill="'+se.color+'" stroke="var(--panel)" stroke-width="2"/>':'').join('');
+      tip.textContent='';const hd=document.createElement('div');hd.textContent='t = '+t[i].toFixed(3)+' s';tip.appendChild(hd);
+      df.series.forEach((se,k)=>{const r=document.createElement('div');r.className='r';const ii=document.createElement('i');ii.style.borderTopColor=se.color;const b=document.createElement('b');b.textContent=Number.isFinite(vals[k][i])?vals[k][i].toFixed(df.dec):'–';r.append(ii,b,document.createTextNode(' '+df.unit+(df.series.length>1?' · '+se.name:'')));tip.appendChild(r);});
+      tip.hidden=false;const br=box.getBoundingClientRect(),bw=box.clientWidth,tw=tip.offsetWidth,ox=rc.left-br.left+xv*rc.width/W;tip.style.left=(ox+12+tw>bw?clamp(ox-tw-12,0,bw-tw):ox+12)+'px';tip.style.top=(rc.top-br.top+8)+'px';});
+    svg2.addEventListener('pointerleave',()=>{tip.hidden=true;xh.setAttribute('visibility','hidden');xd.innerHTML='';});
+    svg2.addEventListener('click',e=>onSeek(tAt(e)));});
+  return{cursor(tc){objs.forEach(o=>{if(!o.cur)return;const x=f1(o.X(tc));o.cur.setAttribute('x1',x);o.cur.setAttribute('x2',x);});}};}
+function chartDefs(Vh,R,kind){const c1=cssv('--s1'),c2=cssv('--s2'),lg=Vh.legs;
+  const two=(k,sc,suf)=>[{name:'Front',color:c1,get:i=>R[k+'1'+(suf||'')][i]*(sc||1)},{name:'Rear',color:c2,dash:true,get:i=>R[k+'0'+(suf||'')][i]*(sc||1)}];
+  const lims=[{y:lg[1].lmin*1000,label:'compressed '+Math.round(lg[1].lmin*1000)},{y:lg[1].lmax*1000,label:'extended '+Math.round(lg[1].lmax*1000)}];
+  if(Math.abs(lg[0].lmin-lg[1].lmin)>1e-4)lims.push({y:lg[0].lmin*1000,label:'rear compressed'});if(Math.abs(lg[0].lmax-lg[1].lmax)>1e-4)lims.push({y:lg[0].lmax*1000,label:'rear extended'});
+  const d=[];
+  if(kind==='run')d.push({title:'Speed',sub:'Body speed along x',unit:'m/s',dec:2,zero:true,minSpan:0.2,series:[{name:'Speed',color:c1,get:i=>R.v[i]}]});
+  else d.push({title:'Pivot height',sub:'Body pivot above the ground',unit:'mm',dec:0,zero:true,minSpan:10,series:[{name:'Height',color:c1,get:i=>R.y[i]*1000}]});
+  d.push({title:'Wheel loads',sub:'Ground normal force on each tyre, averaged over each sample',unit:'N',dec:0,zero:true,minSpan:20,series:two('N',1,'a')});
+  d.push({title:'Coilover length',sub:'Eye to eye, against the shock limits',unit:'mm',dec:1,minSpan:4,series:two('l',1000),refs:lims});
+  d.push({title:'Coilover force',sub:'Spring + damper + stops, averaged over each sample',unit:'N',dec:0,zero:true,minSpan:20,series:two('F',1,'a')});
+  d.push({title:'Load factor at the CG',sub:'Accelerometer on the body (1 g at rest), averaged over each sample',unit:'g',dec:2,minSpan:0.2,series:[{name:'Load factor',color:c1,get:i=>R.nza[i]}],refs:[{y:1,label:'1 g'}]});
+  d.push({title:'Body pitch',sub:'Nose up is positive',unit:'°',dec:1,zero:true,minSpan:2,series:[{name:'Pitch',color:c1,get:i=>R.ph[i]*R2D}]});
+  if(kind==='run'){d.push({title:'Motor torque',sub:'At each wheel',unit:'N·m',dec:2,zero:true,minSpan:1,series:two('T')});d.push({title:'Wheel slip',sub:'Tyre surface speed relative to the ground',unit:'m/s',dec:2,zero:true,minSpan:0.2,series:two('sl')});}
+  return d;}
+function peak10(R,k){const t=R.t,a=R[k],n=a.length;if(!n)return{v:NaN,i:0};const dt=n>1?(t[n-1]-t[0])/(n-1):0.01,K=Math.max(1,Math.round(0.01/dt));let s=0,best=-Infinity,bi=0;
+  for(let i=0;i<n;i++){s+=a[i];if(i>=K)s-=a[i-K];if(i>=K-1||i===n-1){const m=s/Math.min(i+1,K);if(m>best){best=m;bi=i;}}}return{v:best,i:bi};}
+const AVG_NOTE='10 ms average';
+function stat(R,k,fn){const a=R[k];let v=fn==='min'?Infinity:-Infinity,iv=0;for(let i=0;i<a.length;i++){const x=a[i];if(!Number.isFinite(x))continue;if(fn==='min'?x<v:x>v){v=x;iv=i;}}return{v,i:iv};}
+const layAttr=v=>String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+function tilesHTML(T){return T.map(t=>'<div class="tile" data-lay="tile:'+layAttr(t[0])+'"><div class="lab">'+t[0]+'</div><div class="val">'+t[1]+'<span>'+t[2]+'</span></div><div class="sub">'+t[3]+'</div></div>').join('');}
+function checkList(host,msgs){host.innerHTML='';msgs.forEach(([lv,t])=>{const d=document.createElement('div');d.className='check';const p=document.createElement('span');p.className='pill '+lv;p.textContent=lv==='ok'?'OK':lv==='warn'?'Check':lv==='info'?'Note':'Problem';if(lv==='info')p.className='pill ok';const s=document.createElement('span');s.textContent=t;d.append(p,s);host.appendChild(d);});}
+function eventSummary(Vh,R){const out=[],dt=R.t.length>1?R.t[1]-R.t[0]:0.005;
+  for(let j=1;j>=0;j--){const nm=j?'Front':'Rear',L=Vh.legs[j];let hits=0,tb=0,inHit=false,lift=0,top=0;for(let i=0;i<R.t.length;i++){const b=R['l'+j][i]<L.lmin;if(b){tb+=dt;if(!inHit)hits++;}inHit=b;if(R['N'+j][i]<=0.5)lift+=dt;if(R['l'+j][i]>L.lmax+1e-4)top+=dt;}
+    if(hits)out.push(['bad',nm+' coilover hit the bump stop '+hits+' time'+(hits>1?'s':'')+' ('+(tb*1000).toFixed(0)+' ms in total).']);
+    if(top>0.02)out.push(['warn',nm+' coilover reached full extension for '+(top*1000).toFixed(0)+' ms.']);
+    if(lift>0.02)out.push(['warn',nm+' wheel was off the ground for '+(lift*1000).toFixed(0)+' ms.']);}
+  return out;}
+
+/* ===================== Vehicle panel (shared) ===================== */
+const VEHROWS=[['sec','Masses'],['mw','Wheel-end mass, wheel + motor','kg',0.1,0.05,100],['mleg','Leg mass','kg',0.1,0,100],['ky','Body pitch radius of gyration','mm',10,20,3000],
+  ['sec','Wheel and tyre'],['rw','Wheel radius','mm',5,20,1500],['J','Wheel spin inertia','kg·m²',0.005,0.0005,10],['kt','Tyre radial stiffness','N/mm',1,1,5000],['ct','Tyre damping','N·s/m',10,0,50000],
+  ['sec','Ground'],['mu','Tyre friction coefficient','',0.05,0,3],['crr','Rolling resistance coefficient','',0.005,0,1],
+  ['sec','Damper, at the shock'],['cb','Bump damping','N·s/m',10,0,100000],['cr','Rebound damping','N·s/m',10,0,100000],['kbs','Bump-stop stiffness','N/mm',10,1,20000],
+  ['sec','Drive motor, per wheel'],['Ts','Stall torque at the wheel','N·m',0.5,0,1000],['rpm','No-load wheel speed','rpm',5,1,5000]];
+const DER=[];
+function buildVehPanels(){document.querySelectorAll('.vehpanel').forEach(host=>{const px=host.dataset.prefix;const wrap=document.createElement('div');
+    wrap.innerHTML='<h2>Vehicle dynamics <a class="help" href="docs.html#vehicle" target="rssdocs" title="Help: vehicle dynamics" aria-label="Help: vehicle dynamics">?</a><small>shared</small></h2>';const grid=document.createElement('div');grid.className='grid-1';wrap.appendChild(grid);
+    VEHROWS.forEach(r=>{if(r[0]==='sec'){const h=document.createElement('div');h.className='hd';h.style.cssText='grid-column:1 / -1;text-align:left;margin-top:8px';h.textContent=r[1];grid.appendChild(h);return;}
+      const[k,lab,u,st,mn,mx]=r,id=px+'-v-'+k,root=k==='rw';
+      if(k==='kt'){const lt=document.createElement('label');lt.className='k';lt.htmlFor=px+'-tyre';lt.textContent='Tyre model';const se=document.createElement('select');se.className='num';se.id=px+'-tyre';se.dataset.dk='tyre';
+        se.innerHTML='<option value="rigid">Rigid</option><option value="compliant">Compliant</option>';grid.append(lt,se);}
+      const lb=mkLabel(lab,u||'',id);if(!u)lb.querySelector('.u').remove();const inp=mkNum(id,st,mn,mx,()=>root?S.rw:S.dyn[k],v=>{if(root)S.rw=v;else S.dyn[k]=v;});
+      if(k==='kt'||k==='ct'){lb.dataset.soft='1';inp.dataset.soft='1';}grid.append(lb,inp);});
+    const dr=document.createElement('div');dr.className='grid-1';dr.innerHTML='<span class="k">Driven wheels</span><span style="display:flex;gap:10px;justify-content:flex-end;font-size:13px"><label class="chk"><input type="checkbox" data-dk="dFront"> Front</label><label class="chk"><input type="checkbox" data-dk="dRear"> Rear</label></span>'+
+      '<label class="k" for="'+px+'-coast">At zero throttle</label><select class="num" id="'+px+'-coast" data-dk="coast"><option value="0">Brake</option><option value="1">Coast</option></select>';wrap.appendChild(dr);
+    const de=document.createElement('div');de.className='derived';wrap.appendChild(de);DER.push(de);
+    const note=document.createElement('p');note.className='hint';note.textContent='Spring rate comes from the Statics tab. Preload is re-solved for this mass split so the rover rests at the start angle. Damping ratios are quarter-car estimates. A rigid tyre is modelled as a very stiff contact (2000 N/mm, about 0.06 mm deflection at rest).';wrap.appendChild(note);
+    host.appendChild(wrap);});
+  document.querySelectorAll('[data-dk]').forEach(el=>el.addEventListener('change',()=>{const k=el.dataset.dk;S.dyn[k]=k==='coast'?el.value==='1':k==='tyre'?el.value:el.checked;syncDyn();update();save();}));}
+function syncDyn(){document.querySelectorAll('[data-dk]').forEach(el=>{const k=el.dataset.dk;if(k==='coast')el.value=S.dyn.coast?'1':'0';else if(k==='tyre')el.value=S.dyn.tyre==='compliant'?'compliant':'rigid';else el.checked=!!S.dyn[k];});
+  document.querySelectorAll('[data-soft]').forEach(el=>{el.hidden=S.dyn.tyre!=='compliant';});}
+function updateDerived(){if(!DER.length)return;const Vh=vehicleFromState();let h='';
+  if(Vh.err)h='<span style="grid-column:1/-1;color:var(--bad);font-family:var(--f-body)">'+Vh.err+'</span>';
+  else{const M0=model(),r=[M0.r.L,M0.r.R];const zeta=(c,j)=>{const lg=Vh.legs[j],mc=Math.max(0.1,(Vh.FN[j]-(Vh.mw+Vh.ml/2)*Vh.g)/Vh.g),kw=r[j].k*1000*lg.MR0*lg.MR0;return c*lg.MR0*lg.MR0/(2*Math.sqrt(kw*mc));};
+    const Mrr=S.dyn.crr*Vh.FN[1]*Vh.r,vtop=S.dyn.Ts>0?Math.max(0,Vh.w0*(Vh.r-Vh.FN[1]/Vh.kt)*(1-Mrr/S.dyn.Ts)):0;
+    const rows=[['','Rear','Front'],['Sprung body mass (kg)',n1(Vh.mb),''],['Spring rate (N/mm)',n2(r[0].k),n2(r[1].k)],['Preload at ride (mm)',n1(Vh.legs[0].x0*1000),n1(Vh.legs[1].x0*1000)],['Static wheel load (N)',n0(Vh.FN[0]),n0(Vh.FN[1])],
+      ['Damping ratio, bump',n2(zeta(S.dyn.cb,0)),n2(zeta(S.dyn.cb,1))],['Damping ratio, rebound',n2(zeta(S.dyn.cr,0)),n2(zeta(S.dyn.cr,1))],['Top speed on flat (m/s)','',n2(vtop)]];
+    rows.forEach((q,i)=>{h+='<span'+(i?'':' class="dh"')+'>'+q[0]+'</span><span'+(i?'':' class="dh"')+'>'+q[1]+'</span><span'+(i?'':' class="dh"')+'>'+q[2]+'</span>';});}
+  DER.forEach(d=>d.innerHTML=h);}
+
+/* ===================== Terrain tab ===================== */
+const TV={mode:'drive',tool:'move',ed:{x0:-0.3,y0:-0.5,s:80,vex:2,fitted:false},drv:{s:0},sel:null,drag:null,stroke:null,
+  rec:null,veh:null,reason:'',sig:'',t:0,i:0,playing:false,raf:0,charts:null,live:null,keys:{go:false,rev:false,brake:false},busy:false};
+const tcv=$('tCanvas'),tmini=$('tMini');
+function tDims(){return{W:tcv.clientWidth||800,H:tcv.clientHeight||400};}
+function edFit(){const{W,H}=tDims(),T=terrain(),len=T.len/1000;TV.ed.s=(W-40)/Math.max(0.5,len);TV.ed.x0=-20/TV.ed.s;TV.ed.vex=+$('tVex').value;const yc=(T.lo+T.hi)/2000;TV.ed.y0=yc-H/(2*TV.ed.s*TV.ed.vex);TV.ed.fitted=true;}
+function driveCam(px){const{W,H}=tDims(),T=terrain();if(!TV.drv.s){const Vh=TV.veh||vehicleFromState();const span=Vh.err?1.6:2*(Vh.legs[1].L+Vh.r)+0.6;TV.drv.s=clamp(W/(span*1.9),40,900);}
+  const s=TV.drv.s;let gsum=0;for(let k=-5;k<=5;k++)gsum+=T.hmm((px+k*0.2)*1000)/1000;const gy=gsum/11;return{x0:px-0.42*W/s,y0:gy-0.3*H/s,s,vex:1};}
+function tDraw(){if($('tab-terrain').hidden)return;const{ctx,W,H}=sizeCanvas(tcv),C=palette(),T=terrain(),lenM=T.len/1000;
+  ctx.font='11px '+cssv('--f-mono');
+  if(TV.mode==='edit'){if(!TV.ed.fitted)edFit();const cam={x0:TV.ed.x0,y0:TV.ed.y0,s:TV.ed.s,vex:TV.ed.vex};const f=drawGround(ctx,W,H,cam,C,x=>T.hmm(x*1000)/1000,lenM);
+    const sx0=S.run.x0/1000;flagAt(ctx,f,sx0,T.hmm(S.run.x0)/1000,C,'start');
+    if(cam.vex===1){const Vh=vehicleFromState();if(!Vh.err){const st=icRun(Vh,T.ter);drawRover(ctx,f,cam,Vh,poseFromState(st),C,{});}}
+    ctx.fillStyle=C.accent;S.map.pts.forEach((p,i)=>{const px=f.sx(p[0]/1000),py=f.sy(p[1]/1000);ctx.beginPath();ctx.arc(px,py,TV.sel&&TV.sel.k==='pt'&&TV.sel.i===i?7:5.5,0,2*Math.PI);ctx.fill();ctx.strokeStyle=C.sheet;ctx.lineWidth=2;ctx.stroke();});
+    S.map.obs.forEach((o,i)=>{const hd=obsHandles(o);const sel=TV.sel&&TV.sel.k==='ob'&&TV.sel.i===i;
+      const p=[f.sx(hd.top[0]/1000),f.sy(hd.top[1]/1000)];ctx.save();ctx.translate(p[0],p[1]);ctx.rotate(Math.PI/4);ctx.fillStyle=C.m2;ctx.fillRect(sel?-6:-5,sel?-6:-5,sel?12:10,sel?12:10);ctx.restore();
+      if(hd.wid){const q=[f.sx(hd.wid[0]/1000),f.sy(hd.wid[1]/1000)];ctx.fillStyle=C.m2;ctx.fillRect(q[0]-4,q[1]-4,8,8);}
+      ctx.fillStyle=C.ink2;ctx.fillText(OBS[o.type].name,p[0]+9,p[1]-8);});
+    if(TV.stroke&&TV.stroke.length>1){ctx.strokeStyle=C.accent;ctx.lineWidth=2;ctx.beginPath();TV.stroke.forEach((p,i)=>{const px=f.sx(p[0]/1000),py=f.sy(p[1]/1000);i?ctx.lineTo(px,py):ctx.moveTo(px,py);});ctx.stroke();}
+    TV.cam=cam;}
+  else{let ps,Vh=TV.veh,i=TV.i;
+    if(TV.live){Vh=TV.live.V;const R=TV.live.sim.rec;i=R.t.length-1;ps=i>=0?poseFromRec(R,i):poseFromState(TV.live.sim.st);}
+    else if(TV.rec&&TV.rec.t.length){ps=poseFromRec(TV.rec,i);}
+    else{Vh=vehicleFromState();if(Vh.err){ctx.fillStyle=C.sheet;ctx.fillRect(0,0,W,H);ctx.fillStyle=C.bad;ctx.fillText(Vh.err,16,24);return;}ps=poseFromState(icRun(Vh,T.ter));}
+    const cam=driveCam(ps.x);const f=drawGround(ctx,W,H,cam,C,x=>T.hmm(x*1000)/1000,lenM);flagAt(ctx,f,S.run.x0/1000,T.hmm(S.run.x0)/1000,C,'');
+    drawRover(ctx,f,cam,Vh,ps,C,{forces:$('tForces').checked});TV.cam=cam;
+    if(TV.live){const R=TV.live.sim.rec;$('tRead').innerHTML=readoutsHTML(TV.live.V,R,R.t.length-1);ctx.fillStyle=C.ink;ctx.font='600 13px '+cssv('--f-body');ctx.fillText('LIVE  '+TV.live.sim.t.toFixed(1)+' s',12,20);}}
+  tMiniDraw();}
+function tMiniDraw(){const{ctx,W,H}=sizeCanvas(tmini),C=palette(),T=terrain(),len=T.len,rng=Math.max(50,T.hi-T.lo);ctx.fillStyle=C.sheet;ctx.fillRect(0,0,W,H);
+  const sx=x=>x/len*W,sy=y=>H-6-(y-T.lo)/rng*(H-16);ctx.beginPath();ctx.moveTo(0,H);for(let px=0;px<=W;px+=1)ctx.lineTo(px,sy(T.hmm(px/W*len)));ctx.lineTo(W,H);ctx.closePath();ctx.fillStyle=C.earth;ctx.fill();
+  ctx.beginPath();for(let px=0;px<=W;px+=1){const y=sy(T.hmm(px/W*len));px?ctx.lineTo(px,y):ctx.moveTo(px,y);}ctx.strokeStyle=C['earth-line'];ctx.lineWidth=1;ctx.stroke();
+  if(TV.cam){const a=sx(TV.cam.x0*1000),b=sx((TV.cam.x0+tDims().W/TV.cam.s)*1000);ctx.strokeStyle=C.accent;ctx.lineWidth=1.5;ctx.strokeRect(a+0.5,1.5,Math.max(4,b-a),H-3);}
+  ctx.fillStyle=C.good;const xs=sx(S.run.x0);ctx.fillRect(xs-1,4,2,H-8);
+  let rx=null;if(TV.live){rx=TV.live.sim.st[0];}else if(TV.rec&&TV.rec.t.length&&TV.mode==='drive'){rx=TV.rec.x[TV.i];}
+  if(rx!=null){ctx.fillStyle=C.m1;ctx.beginPath();ctx.arc(sx(rx*1000),sy(T.hmm(rx*1000))-5,4,0,2*Math.PI);ctx.fill();}}
+function obsHandles(o){const O=OBS[o.type],end=!!O.end,ex=O.ext(o);const hx=end?o.x+o.w/2:o.x,base=groundWithout(hx,o);const sign=(o.type==='ditch'||o.type==='stepdown')?-1:1;
+  const top=[hx,base+sign*o.h];let wid=null;if(o.type==='ramp'){const xw=o.x-o.w/2;wid=[xw,groundWithout(xw,o)];}else if(!end){const xw=o.x+ex/2;wid=[xw,groundWithout(xw,o)];}
+  return{top,wid,base,sign,end};}
+function tHit(px,py){const f=camFns(TV.cam,tDims().H),r2=11*11,d2=(x,y)=>(f.sx(x/1000)-px)**2+(f.sy(y/1000)-py)**2;
+  for(let i=S.map.obs.length-1;i>=0;i--){const hd=obsHandles(S.map.obs[i]);if(d2(hd.top[0],hd.top[1])<r2)return{k:'ob',i,part:'top'};if(hd.wid&&d2(hd.wid[0],hd.wid[1])<r2)return{k:'ob',i,part:'wid'};}
+  const T=terrain();const fx=f.sx(S.run.x0/1000),fy=f.sy(T.hmm(S.run.x0)/1000);if(Math.abs(px-fx)<10&&py<fy+6&&py>fy-40)return{k:'start'};
+  for(let i=0;i<S.map.pts.length;i++){const p=S.map.pts[i];if(d2(p[0],p[1])<r2)return{k:'pt',i};}return null;}
+function mapChanged(){TER=null;TV.ed.fitted=TV.ed.fitted;save();renderObsList();$('mapLen').textContent=(S.map.pts[S.map.pts.length-1][0]/1000).toFixed(2)+' m long';tDraw();markStale();}
+function tPointer(){let pan=null;
+  tcv.addEventListener('pointerdown',e=>{if(TV.mode!=='edit'||!TV.cam)return;const rc=tcv.getBoundingClientRect(),px=e.clientX-rc.left,py=e.clientY-rc.top,f=camFns(TV.cam,tDims().H);
+    tcv.setPointerCapture(e.pointerId);const wxm=f.wx(px)*1000,wym=f.wy(py)*1000;
+    if(TV.tool==='draw'){TV.stroke=[[wxm,wym]];return;}
+    const h=tHit(px,py);
+    if(h){TV.sel=h.k==='start'?null:h;TV.drag=h;renderObsList();tDraw();}else{pan={px,py,x0:TV.ed.x0,y0:TV.ed.y0};}});
+  tcv.addEventListener('pointermove',e=>{if(TV.mode!=='edit'||!TV.cam)return;const rc=tcv.getBoundingClientRect(),px=e.clientX-rc.left,py=e.clientY-rc.top,f=camFns(TV.cam,tDims().H),wxm=f.wx(px)*1000,wym=f.wy(py)*1000;
+    if(TV.stroke){TV.stroke.push([wxm,wym]);tDraw();return;}
+    if(pan){TV.ed.x0=pan.x0-(px-pan.px)/TV.ed.s;TV.ed.y0=pan.y0+(py-pan.py)/(TV.ed.s*TV.ed.vex);tDraw();return;}
+    const d=TV.drag;if(!d){tcv.style.cursor=TV.tool==='draw'?'crosshair':(tHit(px,py)?'grab':'default');return;}
+    const len=S.map.pts[S.map.pts.length-1][0];
+    if(d.k==='pt'){const P=S.map.pts,i=d.i;let x=Math.round(wxm);if(i===0)x=0;else{const lo=P[i-1][0]+20,hi=i<P.length-1?P[i+1][0]-20:1e9;x=clamp(x,lo,hi);}P[i]=[x,Math.round(wym)];TER=null;}
+    else if(d.k==='start'){S.run.x0=clamp(Math.round(wxm),300,len-300);}
+    else if(d.k==='ob'){const o=S.map.obs[d.i],O=OBS[o.type];TER=null;terrain();
+      if(d.part==='top'){o.x=Math.round(O.end?wxm-o.w/2:wxm);const hx=O.end?o.x+o.w/2:o.x,base=groundWithout(hx,o);let hv=wym-base;if(o.type==='ditch'||o.type==='stepdown')hv=-hv;o.h=o.type==='ramp'?Math.round(hv):Math.max(1,Math.round(hv));}
+      else{const dxm=Math.abs(wxm-o.x);if(o.type==='wash')o.w=Math.max(20,Math.round(2*dxm/o.n));else o.w=Math.max(20,Math.round(2*dxm));}}
+    TER=null;tDraw();syncObsInputs();syncInputs();});
+  tcv.addEventListener('dblclick',e=>{if(TV.mode!=='edit'||TV.tool!=='move'||!TV.cam)return;const rc=tcv.getBoundingClientRect(),px=e.clientX-rc.left,py=e.clientY-rc.top,f=camFns(TV.cam,tDims().H),wxm=f.wx(px)*1000,wym=f.wy(py)*1000,h=tHit(px,py);
+    if(h&&h.k==='pt'){if(h.i>0&&h.i<S.map.pts.length-1){S.map.pts.splice(h.i,1);TV.sel=null;mapChanged();}return;}
+    if(!h&&wxm>20&&wxm<S.map.pts[S.map.pts.length-1][0]-20&&!S.map.pts.some(q=>Math.abs(q[0]-wxm)<20)){S.map.pts.push([Math.round(wxm),Math.round(wym)]);S.map.pts.sort((a,b)=>a[0]-b[0]);mapChanged();}});
+  const up=e=>{if(TV.mode!=='edit')return;if(TV.stroke){applyFreehand(TV.stroke);TV.stroke=null;}if(TV.drag){TV.drag=null;mapChanged();}pan=null;};
+  tcv.addEventListener('pointerup',up);tcv.addEventListener('pointercancel',up);
+  tmini.addEventListener('click',e=>{const rc=tmini.getBoundingClientRect(),x=(e.clientX-rc.left)/rc.width*terrain().len/1000;
+    if(TV.mode==='edit'){const{W}=tDims();TV.ed.x0=x-W/(2*TV.ed.s);tDraw();}
+    else if(TV.rec&&TV.rec.t.length&&!TV.live){const R=TV.rec;let k=R.x.findIndex(v=>v>=x);if(k<0)k=R.x.length-1;tSeek(R.t[k]);}});
+  window.addEventListener('keydown',e=>{if(TV.mode==='edit'&&TV.sel&&(e.key==='Delete'||e.key==='Backspace')&&document.activeElement===tcv){e.preventDefault();
+    if(TV.sel.k==='ob'){S.map.obs.splice(TV.sel.i,1);}else if(TV.sel.k==='pt'&&TV.sel.i>0&&TV.sel.i<S.map.pts.length-1){S.map.pts.splice(TV.sel.i,1);}TV.sel=null;mapChanged();}});}
+function rdp(pts,eps){if(pts.length<3)return pts.slice();const keep=new Uint8Array(pts.length);keep[0]=keep[pts.length-1]=1;const stack=[[0,pts.length-1]];
+  while(stack.length){const[a,b]=stack.pop();let md=0,mi=-1;const[x1,y1]=pts[a],[x2,y2]=pts[b],dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy)||1;for(let i=a+1;i<b;i++){const d=Math.abs(dy*pts[i][0]-dx*pts[i][1]+x2*y1-y2*x1)/L;if(d>md){md=d;mi=i;}}
+    if(md>eps&&mi>0){keep[mi]=1;stack.push([a,mi],[mi,b]);}}return pts.filter((_,i)=>keep[i]);}
+function applyFreehand(raw){const len=S.map.pts[S.map.pts.length-1][0];let p=raw.map(q=>[clamp(q[0],0,len),q[1]]).sort((a,b)=>a[0]-b[0]);const mono=[];p.forEach(q=>{if(!mono.length||q[0]-mono[mono.length-1][0]>=8)mono.push(q);});
+  if(mono.length<2)return;const pts=rdp(mono,3).map(q=>[Math.round(q[0]),Math.round(q[1])]);const a=pts[0][0],b=pts[pts.length-1][0];
+  const keep=S.map.pts.filter(q=>q[0]<a-20||q[0]>b+20);let merged=keep.concat(pts).sort((u,v)=>u[0]-v[0]);if(merged[0][0]!==0)merged.unshift([0,merged[0][1]]);
+  if(merged[merged.length-1][0]<len)merged.push([len,merged[merged.length-1][1]]);S.map.pts=merged;mapChanged();setStatusT('Ground redrawn from '+(a/1000).toFixed(2)+' to '+(b/1000).toFixed(2)+' m with '+pts.length+' points.');}
+function setStatusT(t){checkList($('tChecks'),[['info',t]]);}
+function renderObsList(){const host=$('obsList');host.innerHTML='';if(!S.map.obs.length){host.innerHTML='<p class="hint" style="margin:0">No obstacles yet. Add one above.</p>';return;}
+  const hd=document.createElement('div');hd.className='obrow';hd.innerHTML='<span class="obhead">Obstacle</span><span class="obhead">x (mm)</span><span class="obhead">h (mm)</span><span class="obhead">w (mm)</span><span class="obhead">n</span><span></span>';host.appendChild(hd);
+  S.map.obs.forEach((o,i)=>{const row=document.createElement('div');row.className='obrow'+(TV.sel&&TV.sel.k==='ob'&&TV.sel.i===i?' sel':'');const nm=document.createElement('span');nm.textContent=OBS[o.type].name;nm.style.cursor='pointer';
+    nm.addEventListener('click',()=>{TV.sel={k:'ob',i};if(TV.mode==='edit'){const{W}=tDims();TV.ed.x0=o.x/1000-W/(2*TV.ed.s);}renderObsList();tDraw();});row.appendChild(nm);
+    [['x',1],['h',1],['w',1],['n',1]].forEach(([k])=>{if(k==='n'&&o.type!=='wash'){row.appendChild(document.createElement('span'));return;}const inp=document.createElement('input');inp.type='number';inp.className='num';inp.value=o[k];inp.dataset.ob=i;inp.dataset.k=k;inp.setAttribute('aria-label',OBS[o.type].name+' '+k);
+      inp.addEventListener('input',()=>{const v=parseFloat(inp.value);if(!Number.isFinite(v))return;o[k]=k==='n'?Math.max(1,Math.round(v)):k==='w'?Math.max(2,v):k==='h'&&o.type!=='ramp'?Math.max(0,v):v;TER=null;save();tDraw();markStale();});row.appendChild(inp);});
+    const del=document.createElement('button');del.type='button';del.className='btn del';del.textContent='✕';del.setAttribute('aria-label','Remove '+OBS[o.type].name);del.addEventListener('click',()=>{S.map.obs.splice(i,1);TV.sel=null;mapChanged();});row.appendChild(del);host.appendChild(row);});}
+function syncObsInputs(){document.querySelectorAll('#obsList input[data-ob]').forEach(inp=>{if(document.activeElement===inp)return;const o=S.map.obs[+inp.dataset.ob];if(o)inp.value=o[inp.dataset.k];});}
+function addObstacle(type){const O=OBS[type],len=S.map.pts[S.map.pts.length-1][0];let x;if(TV.mode==='edit'&&TV.cam){const{W}=tDims();x=Math.round((TV.cam.x0+W/(2*TV.cam.s))*1000);}else x=Math.round(len/2);
+  x=clamp(x,400,len-400);S.map.obs.push({type,x,h:O.h,w:O.w,n:O.n||1});TV.sel={k:'ob',i:S.map.obs.length-1};mapChanged();}
+function importCSV(text){const units=$('csvUnits').value;const pts=[];text.split(/\r?\n/).forEach(line=>{const nums=line.split(/[,;\t ]+/).map(s=>s.trim()).filter(Boolean).map(Number);if(nums.length>=2&&Number.isFinite(nums[0])&&Number.isFinite(nums[1]))pts.push([nums[0],nums[1]]);});
+  if(pts.length<2){setStatusT('No numeric x, y rows found in that file.');return;}pts.sort((a,b)=>a[0]-b[0]);const span=pts[pts.length-1][0]-pts[0][0];let k=1;
+  if(units==='m'||(units==='auto'&&span<300))k=1000;const x0=pts[0][0];let P=pts.map(p=>[(p[0]-x0)*k,p[1]*k]);const mono=[];P.forEach(q=>{if(!mono.length||q[0]-mono[mono.length-1][0]>=5)mono.push(q);});
+  P=mono.length>1500?rdp(mono,1):mono;if(P.length<2||P[P.length-1][0]<1000){setStatusT('The profile is shorter than 1 m after import. Check the units.');return;}
+  S.map.pts=P.map(q=>[Math.round(q[0]),Math.round(q[1])]);S.run.x0=clamp(S.run.x0,300,S.map.pts[S.map.pts.length-1][0]-300);TV.ed.fitted=false;mapChanged();
+  setStatusT('Imported '+S.map.pts.length+' points, '+(S.map.pts[S.map.pts.length-1][0]/1000).toFixed(2)+' m long ('+(k===1000?'metres':'millimetres')+').');}
+function markStale(){if(typeof UV!=='undefined'&&UV.best&&UV.sig&&!UV.running&&UV.sig!==dynSig()+JSON.stringify(S.map)+JSON.stringify(S.run)+JSON.stringify(S.drop)+JSON.stringify(S.tune)){const host=$('uChecks');if(!host.querySelector('.stale')){const d=document.createElement('div');d.className='check stale';d.innerHTML='<span class="pill warn">Check</span><span>Inputs changed since this tuning run. Start again to update it.</span>';host.prepend(d);}}
+  [['tChecks',TV],['dChecks',DV]].forEach(([id,o])=>{if(o.rec&&o.sig&&o.sig!==dynSig()+(id==='tChecks'?JSON.stringify(S.map)+JSON.stringify(S.run):JSON.stringify(S.drop))){const host=$(id);if(!host.querySelector('.stale')){const d=document.createElement('div');d.className='check stale';d.innerHTML='<span class="pill warn">Check</span><span>Inputs changed since this recording. Run again to update it.</span>';host.prepend(d);}}});}
+const runStop=RP.runStopReason;
+function showOverlay(pfx,on,txt,frac){$(pfx+'Overlay').hidden=!on;if(txt!=null)$(pfx+'OvText').textContent=txt;if(frac!=null)$(pfx+'OvBar').style.width=(clamp(frac,0,1)*100).toFixed(1)+'%';}
+function tRun(){if(TV.busy)return;tStopLive();tPause();const Vh=vehicleFromState();if(Vh.err){checkList($('tChecks'),[['bad',Vh.err]]);return;}const T=terrain(),st=icRun(Vh,T.ter),xs=wheelXs(Vh,st);
+  if(Math.min(...xs)<Vh.r||Math.max(...xs)>T.len/1000-Vh.r){checkList($('tChecks'),[['bad','The rover does not fit on the map at that start position. Move the start flag.']]);return;}
+  const sim=new DYN.Sim(Vh,T.ter,st),u=clamp(S.run.u/100,-1,1),tmax=Math.max(0.5,S.run.tmax),ctl={u,stall:0};let reason='';TV.busy=true;showOverlay('t',true,'Simulating…',0);
+  const chunk=()=>{const t0=performance.now();while(performance.now()-t0<28){const tn=Math.min(tmax,sim.t+0.02);if(!sim.advance(tn,u)){reason='diverged';break;}reason=runStop(sim,Vh,T.len/1000,ctl,0.02);if(reason)break;if(sim.t>=tmax-1e-9){reason='reached the time limit';break;}}
+    showOverlay('t',true,'Simulating… '+sim.t.toFixed(1)+' s of '+tmax+' s',sim.t/tmax);if(reason){sim.record(u);TV.busy=false;showOverlay('t',false);tLoad(sim.rec,Vh,reason);}else setTimeout(chunk,0);};
+  setTimeout(chunk,0);}
+function tLoad(R,Vh,reason){TV.rec=R;TV.veh=Vh;TV.reason=reason;TV.sig=dynSig()+JSON.stringify(S.map)+JSON.stringify(S.run);TV.drv.s=0;const tEnd=R.t[R.t.length-1];$('tTime').max=tEnd;$('tTime').step=0.005;
+  TV.charts=timeCharts($('tCharts'),R,chartDefs(Vh,R,'run'),t=>tSeek(t));tTiles();tSeek(0);}
+function tTiles(){const R=TV.rec,Vh=TV.veh;if(!R)return;const n=R.t.length,tEnd=R.t[n-1],dist=R.x[n-1]-R.x[0];
+  const pkN=[peak10(R,'N0a').v,peak10(R,'N1a').v],pkF=[peak10(R,'F0a').v,peak10(R,'F1a').v],mnl=[stat(R,'l0','min').v,stat(R,'l1','min').v];
+  const mg=[1000*(mnl[0]-Vh.legs[0].lmin),1000*(mnl[1]-Vh.legs[1].lmin)];let E=0;for(let i=1;i<n;i++)E+=Math.max(0,R.P[i])*(R.t[i]-R.t[i-1]);
+  const fr=(a,f)=>'F '+f(a[1])+' · R '+f(a[0]);const res=TV.reason==='finished'?'Finished':TV.reason==='stalled'?'Stalled':TV.reason==='tipped over'?'Tipped over':TV.reason==='diverged'?'Unstable':'Stopped';
+  $('tTiles').innerHTML=tilesHTML([[ 'Result',res,'',TV.reason==='finished'?'in '+tEnd.toFixed(1)+' s':(TV.reason+' at '+R.x[n-1].toFixed(2)+' m')],
+    ['Average speed',(dist/Math.max(1e-6,tEnd)).toFixed(2),'m/s','max '+stat(R,'v','max').v.toFixed(2)+' m/s over '+dist.toFixed(1)+' m'],
+    ['Peak wheel load',fr(pkN,n0),'N',AVG_NOTE+', × static: '+fr([pkN[0]/Vh.FN[0],pkN[1]/Vh.FN[1]],n1)],
+    ['Peak coilover force',fr(pkF,n0),'N',AVG_NOTE+', at ride: '+fr([Vh.legs[0].F0,Vh.legs[1].F0],n0)+' N'],
+    ['Closest to bump stop',fr(mg,n1),'mm',(mg[0]<0||mg[1]<0)?'negative = into the bump stop':'clearance left at the tightest moment'],
+    ['Peak load factor',peak10(R,'nza').v.toFixed(2),'g',AVG_NOTE+', max pitch '+(Math.max(stat(R,'ph','max').v,-stat(R,'ph','min').v)*R2D).toFixed(1)+'°, energy '+(E/1000).toFixed(2)+' kJ']]);
+  const msgs=eventSummary(Vh,R);msgs.unshift([TV.reason==='finished'?'ok':TV.reason==='diverged'?'bad':'warn','Run '+(TV.reason==='finished'?'finished the course':TV.reason)+' after '+tEnd.toFixed(2)+' s.']);
+  if(TV.reason==='diverged')msgs.push(['bad','The simulation became unstable. Very stiff tyres, stops or huge forces can cause this; try softer values.']);if(Vh.rigid)msgs.push(['info',RIGID_NOTE(R,'run')]);checkList($('tChecks'),msgs);}
+function RIGID_NOTE(R){const sp=Math.max(stat(R,'N0','max').v,stat(R,'N1','max').v);return 'Rigid tyres: impacts last about a millisecond and their instantaneous peak (here up to '+Math.round(sp)+' N at a wheel) is set by the assumed contact stiffness, so peaks are reported as 10 ms averages. Use a compliant tyre with your real tyre stiffness for realistic impact peaks.';}
+function tSeek(t){const R=TV.rec;if(!R||!R.t.length)return;TV.t=clamp(t,0,R.t[R.t.length-1]);TV.i=idxAt(R,TV.t);$('tTime').value=TV.t;$('tTimeOut').textContent=TV.t.toFixed(2)+' s';
+  $('tRead').innerHTML=readoutsHTML(TV.veh,R,TV.i);if(TV.charts)TV.charts.cursor(TV.t);tDraw();}
+function tPause(){TV.playing=false;cancelAnimationFrame(TV.raf);$('tPlay').textContent='▶';$('tPlay').setAttribute('aria-label','Play');}
+function tPlay(){if(!TV.rec||TV.live)return;if(TV.playing){tPause();return;}const R=TV.rec,tEnd=R.t[R.t.length-1];if(TV.t>=tEnd-1e-6)TV.t=0;TV.playing=true;$('tPlay').textContent='❚❚';$('tPlay').setAttribute('aria-label','Pause');let last=performance.now();
+  const loop=now=>{if(!TV.playing)return;const dt=Math.min(0.1,(now-last)/1000)*(+$('tSpeed').value);last=now;tSeek(TV.t+dt);if(TV.t>=tEnd-1e-6){tPause();return;}TV.raf=requestAnimationFrame(loop);};TV.raf=requestAnimationFrame(loop);}
+function liveU(){const k=TV.keys,mag=Math.max(0.05,Math.abs(S.run.u)/100);if(k.brake)return{u:0,brake:true};if(k.go)return{u:mag};if(k.rev)return{u:-mag};if($('tHold').checked)return{u:clamp(S.run.u/100,-1,1)};return{u:0};}
+function tLive(){if(TV.busy)return;if(TV.live){tStopLive('stopped');return;}tPause();setMode('drive');const Vh=vehicleFromState();if(Vh.err){checkList($('tChecks'),[['bad',Vh.err]]);return;}
+  const T=terrain(),st=icRun(Vh,T.ter),sim=new DYN.Sim(Vh,T.ter,st);TV.live={sim,V:Vh,T,ctl:{u:0,stall:0},last:performance.now(),coast:Vh.coast};TV.drv.s=0;
+  $('tPad').hidden=false;$('tPlayer').hidden=true;$('tLive').textContent='Stop live';$('tRun').disabled=true;tcv.focus({preventScroll:true});checkList($('tChecks'),[['info','Live: hold → or D to drive, ← or A to reverse, Space to brake. Stop to replay the recording.']]);
+  const loop=now=>{const L=TV.live;if(!L)return;const dt=Math.min(0.05,(now-L.last)/1000)*(+$('tSpeed').value);L.last=now;const c=liveU();L.V.coast=c.brake?false:L.coast;L.ctl.u=c.u;
+    const target=L.sim.t+dt;if(!L.sim.advance(target,c.u)){tStopLive('diverged');return;}const why=runStop(L.sim,L.V,T.len/1000,L.ctl,dt);
+    ['padGo','padRev','padBrake'].forEach((id,j)=>$(id).classList.toggle('on',[TV.keys.go,TV.keys.rev,TV.keys.brake][j]));tDraw();
+    if(why&&why!=='stalled'){tStopLive(why);return;}if(L.sim.t>180){tStopLive('reached the 3 minute limit');return;}L.raf=requestAnimationFrame(loop);};TV.live.raf=requestAnimationFrame(loop);}
+function tStopLive(reason){const L=TV.live;if(!L)return;cancelAnimationFrame(L.raf);TV.live=null;L.V.coast=L.coast;$('tPad').hidden=true;$('tPlayer').hidden=TV.mode==='edit';$('tLive').textContent='Drive live';$('tRun').disabled=false;
+  if(L.sim.rec.t.length>2){L.sim.record(L.ctl.u);tLoad(L.sim.rec,L.V,reason||'stopped');}else tDraw();}
+function setMode(m){TV.mode=m;setSeg('tvEdit','tvDrive',m==='edit');$('tEditTools').hidden=m!=='edit';$('tDriveTools').hidden=m==='edit';$('tHelpEdit').hidden=m!=='edit';$('tPlayer').hidden=m==='edit';$('tRead').hidden=m==='edit';
+  if(m==='edit'){tStopLive('stopped');tPause();if(!TV.ed.fitted)edFit();}tcv.style.cursor=m==='edit'?'default':'auto';tDraw();}
+function tInit(){
+  $('tvEdit').addEventListener('click',()=>setMode('edit'));$('tvDrive').addEventListener('click',()=>setMode('drive'));
+  $('toolMove').addEventListener('click',()=>{TV.tool='move';setSeg('toolMove','toolDraw',true);});$('toolDraw').addEventListener('click',()=>{TV.tool='draw';setSeg('toolMove','toolDraw',false);});
+  $('tVex').addEventListener('change',()=>{const{H}=tDims(),f=camFns(TV.ed,H),yc=f.wy(H/2);TV.ed.vex=+$('tVex').value;TV.ed.y0=yc-H/(2*TV.ed.s*TV.ed.vex);tDraw();});
+  $('tFit').addEventListener('click',()=>{edFit();tDraw();});
+  const zoom=k=>{const{W,H}=tDims();if(TV.mode==='edit'){const f=camFns(TV.ed,H),xc=f.wx(W/2),yc=f.wy(H/2);TV.ed.s=clamp(TV.ed.s*k,10,3000);TV.ed.x0=xc-W/(2*TV.ed.s);TV.ed.y0=yc-H/(2*TV.ed.s*TV.ed.vex);}else{if(!TV.drv.s)driveCam(0);TV.drv.s=clamp(TV.drv.s*k,30,1500);}tDraw();};
+  $('tZoomIn').addEventListener('click',()=>zoom(1.3));$('tZoomOut').addEventListener('click',()=>zoom(1/1.3));
+  $('tRun').addEventListener('click',tRun);$('tLive').addEventListener('click',tLive);$('tStop').addEventListener('click',()=>tStopLive('stopped'));
+  $('tPlay').addEventListener('click',tPlay);$('tTime').addEventListener('input',e=>{tPause();tSeek(+e.target.value);});$('tForces').addEventListener('change',tDraw);
+  const KM={ArrowRight:'go',KeyD:'go',ArrowLeft:'rev',KeyA:'rev',Space:'brake'};
+  window.addEventListener('keydown',e=>{if(!TV.live)return;const k=KM[e.code];if(!k)return;const tag=(document.activeElement&&document.activeElement.tagName)||'';if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA')return;e.preventDefault();TV.keys[k]=true;});
+  window.addEventListener('keyup',e=>{const k=KM[e.code];if(k)TV.keys[k]=false;});window.addEventListener('blur',()=>{TV.keys={go:false,rev:false,brake:false};});
+  [['padGo','go'],['padRev','rev'],['padBrake','brake']].forEach(([id,k])=>{const b=$(id);b.addEventListener('pointerdown',e=>{e.preventDefault();TV.keys[k]=true;try{b.setPointerCapture(e.pointerId);}catch(_){}});['pointerup','pointercancel','pointerleave'].forEach(ev=>b.addEventListener(ev,()=>{TV.keys[k]=false;}));});
+  const chips=$('obsAdd');Object.keys(OBS).forEach(t=>{const b=document.createElement('button');b.type='button';b.className='chip';b.textContent='+ '+OBS[t].name;b.addEventListener('click',()=>addObstacle(t));chips.appendChild(b);});
+  $('mapPreset').addEventListener('change',e=>{const v=e.target.value;if(!v)return;S.map=preset(v);S.run.x0=800;TV.ed.fitted=false;TV.sel=null;mapChanged();e.target.value='';setStatusT('Loaded the '+e.target.options[e.target.selectedIndex].text.toLowerCase()+' preset.');});
+  $('mapFlatten').addEventListener('click',()=>{const len=S.map.pts[S.map.pts.length-1][0];S.map.pts=[[0,0],[len,0]];TV.ed.fitted=false;mapChanged();});
+  $('mapClearObs').addEventListener('click',()=>{S.map.obs=[];TV.sel=null;mapChanged();});
+  $('csvFile').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{importCSV(String(rd.result));e.target.value='';};rd.readAsText(f);});
+  $('tCsv').addEventListener('click',()=>{const R=TV.rec;if(!R){return;}const keys=['t','x','y','ph','v','u','nz','N0','N1','l0','l1','F0','F1','Fs0','Fs1','Fd0','Fd1','Fb0','Fb1','T0','T1','sl0','sl1','P','N0a','N1a','F0a','F1a','nza'];
+    const head='time_s,x_m,pivot_y_m,pitch_rad,speed_mps,throttle,load_factor_g,N_rear_N,N_front_N,coil_len_rear_m,coil_len_front_m,coil_F_rear_N,coil_F_front_N,spring_rear_N,spring_front_N,damper_rear_N,damper_front_N,stop_rear_N,stop_front_N,torque_rear_Nm,torque_front_Nm,slip_rear_mps,slip_front_mps,motor_power_W,N_rear_avg_N,N_front_avg_N,coil_F_rear_avg_N,coil_F_front_avg_N,load_factor_avg_g';
+    const lines=R.t.map((_,i)=>keys.map(k=>(+R[k][i]).toPrecision(6)).join(','));offer('rover-terrain-run.csv',head+'\n'+lines.join('\n')+'\n');});
+  const RUNROWS=[['u','Throttle','%',5,-100,100],['v0','Initial speed','m/s',0.1,-5,5],['x0','Start position','mm',50,300,100000],['tmax','Max run time','s',1,1,600]];
+  RUNROWS.forEach(([k,lab,u,st,mn,mx])=>{const gr=$('gRun');gr.appendChild(mkLabel(lab,u,'r-'+k));gr.appendChild(mkNum('r-'+k,st,mn,mx,()=>S.run[k],v=>{S.run[k]=v;}));});
+  tPointer();renderObsList();$('mapLen').textContent=(S.map.pts[S.map.pts.length-1][0]/1000).toFixed(2)+' m long';setMode('drive');}
+
+/* ===================== Drop tab ===================== */
+const DV={rec:null,veh:null,sig:'',t:0,i:0,playing:false,raf:0,charts:null,busy:false,cam:null};
+const dcv=$('dCanvas');
+function dSim(Vh,h,cb){const st=icDrop(Vh,h/1000,S.drop.pitch*D2R,S.drop.vx);const sim=new DYN.Sim(Vh,flatTer(),st,{recDt:0.001});const tEnd=Math.max(0.3,S.drop.t);return{sim,tEnd};}
+function dDraw(){if($('tab-drop').hidden)return;const{ctx,W,H}=sizeCanvas(dcv),C=palette();ctx.font='11px '+cssv('--f-mono');let Vh=DV.veh,ps;
+  if(DV.rec&&DV.rec.t.length)ps=poseFromRec(DV.rec,DV.i);else{Vh=vehicleFromState();if(Vh.err){ctx.fillStyle=C.sheet;ctx.fillRect(0,0,W,H);ctx.fillStyle=C.bad;ctx.fillText(Vh.err,16,24);return;}ps=poseFromState(icDrop(Vh,S.drop.h/1000,S.drop.pitch*D2R,S.drop.vx));}
+  if(!DV.cam||!DV.rec){const span=2*(Vh.legs[1].L+Vh.r)+0.4,hgt=S.drop.h/1000+0.8;const s=clamp(Math.min(W*0.8/span,H*0.85/hgt),30,900);DV.cam={x0:10-W/(2*s),y0:-0.12*H/s,s,vex:1};}
+  const cam=Object.assign({},DV.cam);if(DV.rec){cam.x0=ps.x-W/(2*cam.s);}const f=drawGround(ctx,W,H,cam,C,()=>0,null);
+  ctx.strokeStyle=C.muted;ctx.setLineDash([3,4]);const y0=f.sy(S.drop.h/1000);ctx.beginPath();ctx.moveTo(0,y0);ctx.lineTo(W,y0);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=C.muted;ctx.fillText('release height '+S.drop.h+' mm',8,y0-5);
+  drawRover(ctx,f,cam,Vh,ps,C,{forces:$('dForces').checked});}
+function dRun(){if(DV.busy)return;dPause();const Vh=vehicleFromState();if(Vh.err){checkList($('dChecks'),[['bad',Vh.err]]);return;}const{sim,tEnd}=dSim(Vh,S.drop.h);DV.busy=true;showOverlay('d',true,'Simulating…',0);
+  const chunk=()=>{const t0=performance.now();let bad=false;while(performance.now()-t0<28&&sim.t<tEnd-1e-9){if(!sim.advance(Math.min(tEnd,sim.t+0.01),0)){bad=true;break;}}
+    showOverlay('d',true,'Simulating… '+sim.t.toFixed(2)+' s',sim.t/tEnd);if(bad||sim.t>=tEnd-1e-9){sim.record(0);DV.busy=false;showOverlay('d',false);dLoad(sim.rec,Vh,bad);}else setTimeout(chunk,0);};setTimeout(chunk,0);}
+function dLoad(R,Vh,bad){DV.rec=R;DV.veh=Vh;DV.sig=dynSig()+JSON.stringify(S.drop);DV.cam=null;$('dTime').max=R.t[R.t.length-1];DV.charts=timeCharts($('dCharts'),R,chartDefs(Vh,R,'drop'),t=>dSeek(t));
+  const pkN=[peak10(R,'N0a').v,peak10(R,'N1a').v],pkF=[peak10(R,'F0a').v,peak10(R,'F1a').v],mnl=[stat(R,'l0','min').v,stat(R,'l1','min').v],mg=[1000*(mnl[0]-Vh.legs[0].lmin),1000*(mnl[1]-Vh.legs[1].lmin)];
+  const pkB=Math.max(stat(R,'Fb0','max').v,stat(R,'Fb1','max').v,0),nz=peak10(R,'nza');let first=R.N0.findIndex((v,i)=>v>0||R.N1[i]>0);let settle='–';
+  if(first>=0){let last=first;for(let i=first;i<R.t.length;i++)if(Math.abs(R.nza[i]-1)>0.05)last=i;settle=last<R.t.length-1?((R.t[last]-R.t[first])*1000).toFixed(0)+' ms':'not settled';}
+  const fr=(a,f)=>'F '+f(a[1])+' · R '+f(a[0]);
+  $('dTiles').innerHTML=tilesHTML([['Peak load factor',nz.v.toFixed(2),'g',AVG_NOTE+', at t = '+R.t[nz.i].toFixed(3)+' s'],['Peak wheel load',fr(pkN,n0),'N',AVG_NOTE+', × static: '+fr([pkN[0]/Vh.FN[0],pkN[1]/Vh.FN[1]],n1)],
+    ['Peak coilover force',fr(pkF,n0),'N',AVG_NOTE+', at ride: '+fr([Vh.legs[0].F0,Vh.legs[1].F0],n0)+' N'],['Closest to bump stop',fr(mg,n1),'mm',(mg[0]<0||mg[1]<0)?'negative = into the bump stop':'clearance left at max compression'],
+    ['Peak bump-stop force',n0(pkB),'N',pkB>0?'the shock bottomed out':'never touched'],['Settling time',settle,'','from touchdown to within ±0.05 g']]);
+  const msgs=eventSummary(Vh,R).filter(m=>!/off the ground/.test(m[1]));msgs.unshift([bad?'bad':(pkB>0?'warn':'ok'),bad?'The simulation became unstable. Try softer tyre or stop stiffness.':pkB>0?'The coilovers bottomed out on this drop.':'The suspension absorbed this drop without bottoming out.']);
+  if(Vh.rigid)msgs.push(['info',RIGID_NOTE(R)]);if(DV.note){msgs.unshift(['info',DV.note]);DV.note='';}checkList($('dChecks'),msgs);dSeek(0);}
+function dSeek(t){const R=DV.rec;if(!R)return;DV.t=clamp(t,0,R.t[R.t.length-1]);DV.i=idxAt(R,DV.t);$('dTime').value=DV.t;$('dTimeOut').textContent=DV.t.toFixed(3)+' s';$('dRead').innerHTML=readoutsHTML(DV.veh,R,DV.i);if(DV.charts)DV.charts.cursor(DV.t);dDraw();}
+function dPause(){DV.playing=false;cancelAnimationFrame(DV.raf);$('dPlay').textContent='▶';$('dPlay').setAttribute('aria-label','Play');}
+function dPlay(){if(!DV.rec)return;if(DV.playing){dPause();return;}const tEnd=DV.rec.t[DV.rec.t.length-1];if(DV.t>=tEnd-1e-6)DV.t=0;DV.playing=true;$('dPlay').textContent='❚❚';$('dPlay').setAttribute('aria-label','Pause');let last=performance.now();
+  const loop=now=>{if(!DV.playing)return;const dt=Math.min(0.1,(now-last)/1000)*(+$('dSpeed').value);last=now;dSeek(DV.t+dt);if(DV.t>=tEnd-1e-6){dPause();return;}DV.raf=requestAnimationFrame(loop);};DV.raf=requestAnimationFrame(loop);}
+function KEYS_CLEAR(R){Object.keys(R).forEach(k=>{R[k].length=0;});}
+function dFind(){if(DV.busy)return;dPause();const Vh0=vehicleFromState();if(Vh0.err){checkList($('dChecks'),[['bad',Vh0.err]]);return;}DV.busy=true;
+  const bottoms=h=>{const Vh=vehicleFromState(),{sim}=dSim(Vh,h),tEnd=Math.min(1.2,Math.max(0.5,Math.sqrt(2*h/1000/9.81)+0.6));sim.recDt=0.0005;let hit=false;
+    while(sim.t<tEnd-1e-9){if(!sim.advance(Math.min(tEnd,sim.t+0.01),0))return true;const R=sim.rec,n=R.t.length-1;if(n>=0&&(R.Fb0.some(v=>v>0)||R.Fb1.some(v=>v>0))){hit=true;break;}R.t.length=0;KEYS_CLEAR(R);}return hit;};
+  let lo=0,hi=2000,it=0;const steps=[];showOverlay('d',true,'Searching drop heights…',0);
+  const next=()=>{if(it===0){if(bottoms(0)){finish(0,true);return;}if(!bottoms(hi)){finish(hi,false,true);return;}}
+    const mid=(lo+hi)/2;if(bottoms(mid))hi=mid;else lo=mid;it++;showOverlay('d',true,'Searching drop heights… '+Math.round(lo)+'–'+Math.round(hi)+' mm',it/11);if(hi-lo<5||it>=11){finish(lo);return;}setTimeout(next,0);};
+  const finish=(h,atRest,never)=>{DV.busy=false;showOverlay('d',false);const hh=Math.max(0,Math.floor(h)-3);const msg=atRest?'The shocks touch the bump stops even at rest or from a tiny drop. Check stroke and spring.':never?'No bottom-out up to a 2 m drop.':'Highest drop without touching the bump stops: about '+hh+' mm. Showing that drop now.';
+    checkList($('dChecks'),[[atRest?'bad':'ok',msg]]);if(!atRest){S.drop.h=never?2000:hh;DV.note=msg;syncInputs();save();dRun();}};setTimeout(next,0);}
+function dInit(){const DROPROWS=[['h','Drop height','mm',10,0,5000],['pitch','Pitch at release (nose up +)','°',1,-45,45],['vx','Forward speed at release','m/s',0.1,-10,10],['t','Simulated time','s',0.1,0.3,10]];
+  DROPROWS.forEach(([k,lab,u,st,mn,mx])=>{const gr=$('gDrop');gr.appendChild(mkLabel(lab,u,'dp-'+k));gr.appendChild(mkNum('dp-'+k,st,mn,mx,()=>S.drop[k],v=>{S.drop[k]=v;if(!DV.rec)dDraw();}));});
+  $('dRun').addEventListener('click',dRun);$('dFind').addEventListener('click',dFind);$('dPlay').addEventListener('click',dPlay);$('dTime').addEventListener('input',e=>{dPause();dSeek(+e.target.value);});$('dForces').addEventListener('change',dDraw);}
+
+/* ===================== Tuner tab ===================== */
+const UV={running:false,stop:false,snap:null,trials:[],base:null,best:null,sig:'',t0:0};
+const UVARS=[['k','Spring rate','N/mm',0.5,0.5,500],['dh','Preload, as ride height change','mm',1,-200,200],['cb','Bump damping','N·s/m',10,0,100000],['cr','Rebound damping','N·s/m',10,0,100000]];
+function uCfg(){const T=S.tune;return{metric:T.metric,w:T.w/100,minClear:T.clear/1000};}
+function uBaseParams(snap){const M0=RP.staticModel(snap,{L:0,R:0});return{k:M0.ok&&M0.r.R.valid?M0.r.R.k:8,dh:0,cb:snap.dyn.cb,cr:snap.dyn.cr};}
+const uSleep=()=>new Promise(r=>setTimeout(r,0));
+async function uEvaluate(p,onProg){const snap=UV.snap,tv=RP.tunedVehicle(snap,p);if(tv.err)return{err:tv.err,p};const res={},recs={},kinds=snap.tune.scen==='both'?['run','drop']:[snap.tune.scen];
+  for(let k=0;k<kinds.length;k++){const kind=kinds[k],V=JSON.parse(JSON.stringify(tv.V));
+    const cfg=kind==='run'?{T:UV.ter.ter,lenM:UV.ter.len/1000,x0:snap.run.x0/1000,v0:snap.run.v0,u:clamp(snap.run.u/100,-1,1),tmax:Math.max(0.5,snap.run.tmax)}:{h:snap.drop.h/1000,ph:snap.drop.pitch*D2R,vx:snap.drop.vx,t:Math.max(0.3,snap.drop.t)};
+    const r=RP.scenarioRunner(kind,V,cfg);while(!r.advance(25)){if(UV.stop)return null;onProg((k+r.progress())/kinds.length);await uSleep();}
+    const m=RP.accelMetrics(r.sim.rec,V,{fromContact:kind==='drop',foreAft:snap.tune.foreAft});m.reason=r.reason;m.tEnd=r.sim.t;res[kind]=m;recs[kind]=r.sim.rec;recs[kind+'V']=V;}
+  return{res,recs,info:tv.info,p};}
+function uSetBusy(on){UV.running=on;$('uStart').hidden=on;$('uStop').hidden=!on;$('uStart').disabled=on;['tRun','tLive','dRun','dFind'].forEach(id=>{$(id).disabled=on;});}
+async function uStart(){if(UV.running)return;const T=S.tune,act=UVARS.map(v=>v[0]).filter(k=>T.vars[k].on);
+  if(!act.length){checkList($('uChecks'),[['bad','Tick at least one variable to tune.']]);return;}
+  for(const k of act){if(!(T.vars[k].max>T.vars[k].min)){checkList($('uChecks'),[['bad','The range for '+UVARS.find(v=>v[0]===k)[1].toLowerCase()+' is empty. Make max larger than min.']]);return;}}
+  if(T.vars.k.on&&T.vars.k.min<=0){checkList($('uChecks'),[['bad','The spring rate range must stay above 0 N/mm.']]);return;}
+  tStopLive('stopped');tPause();dPause();
+  UV.snap=clone(S);UV.ter=RP.buildTerrain(UV.snap.map);UV.trials=[];UV.best=null;UV.base=null;UV.stop=false;UV.t0=performance.now();uSetBusy(true);$('uApply').disabled=true;checkList($('uChecks'),[]);
+  const cfg=uCfg(),p0=uBaseParams(UV.snap),budget=Math.max(5,Math.round(T.budget));
+  const toN=p=>act.map(k=>(p[k]-T.vars[k].min)/(T.vars[k].max-T.vars[k].min)),toP=x=>{const p=Object.assign({},p0);act.forEach((k,i)=>{p[k]=T.vars[k].min+clamp(x[i],0,1)*(T.vars[k].max-T.vars[k].min);});return p;};
+  const prog=(i,f)=>{const fr=(i+f)/(budget+1);$('uBar').style.width=(clamp(fr,0,1)*100).toFixed(1)+'%';};
+  uStatus('Running the current setup…');
+  const b=await uEvaluate(p0,f=>prog(0,f));
+  if(!b){uFinish('Stopped.');return;}if(b.err){uSetBusy(false);checkList($('uChecks'),[['bad','The current setup cannot be simulated: '+b.err]]);uStatus('');return;}
+  UV.base=Object.assign(b,{f:RP.tunerScore(b.res,b.res,cfg)});
+  const x0=toN(p0),inBox=x0.every(v=>v>=0&&v<=1),gen=RP.tunerSearch(act.length,x0,budget,7);let r=gen.next(),i=0;
+  while(!r.done&&!UV.stop){const p=toP(r.value);let e;
+    if(i===0&&inBox)e=b;else{uStatus('Trial '+(i+1)+' of '+budget+'…');e=await uEvaluate(p,f=>prog(i+1,f));if(!e)break;}
+    const f=e.err?100:RP.tunerScore(e.res,UV.base.res,cfg);const tr={i:i+1,p,f,res:e.res,info:e.info,err:e.err};UV.trials.push(tr);
+    if(!e.err&&(!UV.best||f<UV.best.f))UV.best=Object.assign({},tr,{recs:e.recs});
+    i++;prog(i,0);uProgressText(budget);uConvDraw();r=gen.next(f);}
+  uFinish(UV.stop?'Stopped after '+UV.trials.length+' trials.':'Finished '+UV.trials.length+' trials in '+((performance.now()-UV.t0)/1000).toFixed(0)+' s.');}
+function uStatus(t){$('uStatus').textContent=t;}
+function uProgressText(budget){const b=UV.best,el=(performance.now()-UV.t0)/1000,per=el/Math.max(1,UV.trials.length),left=Math.max(0,budget-UV.trials.length)*per;
+  if(!b){uStatus('Trial '+UV.trials.length+' of '+budget);return;}
+  uStatus('Trial '+UV.trials.length+' of '+budget+' · best score '+b.f.toFixed(3)+' ('+pct(b.f,UV.base.f)+') with k '+b.p.k.toFixed(2)+' N/mm, ride '+sgn(b.p.dh,1)+' mm, damping '+Math.round(b.p.cb)+' / '+Math.round(b.p.cr)+' N·s/m · about '+Math.ceil(left)+' s left');}
+const sgn=(v,d)=>(v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(d);
+const pct=(v,b)=>{const c=(v/b-1)*100;if(Math.abs(c)<0.5)return 'no change vs current';return (c<0?'−':'+')+Math.abs(c).toFixed(0)+'% vs current';};
+function uFinish(msg){uSetBusy(false);UV.sig=dynSig()+JSON.stringify(S.map)+JSON.stringify(S.run)+JSON.stringify(S.drop)+JSON.stringify(S.tune);uStatus(msg);$('uBar').style.width='100%';
+  if(UV.best&&UV.base){$('uApply').disabled=false;uRender();}uConvDraw();}
+function uConvDraw(){const host=$('uConv');const tr=UV.trials;if(!tr.length){host.innerHTML='';return;}const W=Math.max(260,host.clientWidth||600),H=150,m={l:44,r:12,t:12,b:26};
+  const fs=tr.map(t=>Math.min(t.f,3)),hi=Math.max(1.05,...fs)*1.05,lo=Math.max(0,Math.min(...fs,1)*0.9),n=Math.max(UV.snap?UV.snap.tune.budget:tr.length,tr.length);
+  const X=i=>m.l+(W-m.l-m.r)*(i-1)/Math.max(1,n-1),Y=v=>m.t+(H-m.t-m.b)*(1-(v-lo)/(hi-lo));
+  let s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" height="'+H+'" role="img" aria-label="Score of each trial">';
+  ticks(lo,hi,3).out.forEach(v=>{s+='<line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+f1(Y(v))+'" y2="'+f1(Y(v))+'" stroke="var(--gridline)"/><text x="'+(m.l-6)+'" y="'+f1(Y(v)+4)+'" text-anchor="end" font-family="var(--f-mono)" font-size="11" fill="var(--muted)">'+v.toFixed(2)+'</text>';});
+  s+='<line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+f1(Y(UV.base?UV.base.f:1))+'" y2="'+f1(Y(UV.base?UV.base.f:1))+'" stroke="var(--ref)" stroke-dasharray="5 4"/><text x="'+(W-m.r-2)+'" y="'+f1(Y(UV.base?UV.base.f:1)-4)+'" text-anchor="end" font-size="11" fill="var(--ink2)">current setup</text>';
+  let bestSoFar=Infinity,path='';tr.forEach((t,k)=>{bestSoFar=Math.min(bestSoFar,t.f);path+=(k?'L':'M')+f1(X(t.i))+' '+f1(Y(Math.min(bestSoFar,3)));});
+  tr.forEach(t=>{s+='<circle cx="'+f1(X(t.i))+'" cy="'+f1(Y(Math.min(t.f,3)))+'" r="3" fill="'+cssv('--s2')+'" opacity="0.55"/>';});
+  s+='<path d="'+path+'" fill="none" stroke="'+cssv('--s1')+'" stroke-width="2"/>';
+  ticks(1,n,5).out.forEach(v=>{if(v<1)return;s+='<text x="'+f1(X(v))+'" y="'+(H-8)+'" text-anchor="middle" font-family="var(--f-mono)" font-size="11" fill="var(--muted)">'+Math.round(v)+'</text>';});
+  s+='<text x="'+(W-m.r)+'" y="'+(H-8)+'" text-anchor="end" font-size="11" fill="var(--muted)">trial</text></svg>';
+  host.innerHTML='<div class="legend" style="margin-top:10px"><span><i style="border-top-color:'+cssv('--s1')+'"></i>Best so far</span><span><i style="border-top-style:dotted;border-top-color:'+cssv('--s2')+'"></i>Each trial (score, lower is better)</span></div>'+s;}
+function uRender(){const B=UV.base,T=UV.best,snap=UV.snap,kinds=Object.keys(B.res);const nm={run:'terrain run',drop:'drop'};
+  const tiles=[['Score',T.f.toFixed(2),'',pct(T.f,B.f)+' (current '+B.f.toFixed(2)+')']];
+  kinds.forEach(k=>{tiles.push(['Peak acceleration, '+nm[k],T.res[k].peak.toFixed(2),'g','current '+B.res[k].peak.toFixed(2)+' g · '+pct(T.res[k].peak,B.res[k].peak).replace(' vs current','')]);
+    tiles.push(['RMS acceleration, '+nm[k],T.res[k].rms.toFixed(3),'g','current '+B.res[k].rms.toFixed(3)+' g · '+pct(T.res[k].rms,B.res[k].rms).replace(' vs current','')]);});
+  $('uTiles').innerHTML=tilesHTML(tiles);
+  const legInfo=(info,j)=>info.legs[j],fr=(info,fn)=>{const a=fn(info.legs[1]),b=fn(info.legs[0]);return a===b?a:'F '+a+' · R '+b;};
+  const zeta=(p,info,c)=>{const lg=info.legs[1],V=UV.best.recs[(kinds[0])+'V'];const mc=Math.max(0.1,(V.FN[1]-(V.mw+V.ml/2)*V.g)/V.g),kw=p.k*1000*lg.MR0*lg.MR0;return(c*lg.MR0*lg.MR0/(2*Math.sqrt(kw*mc))).toFixed(2);};
+  const zetaB=(p,info,c)=>{const lg=info.legs[1],V=UV.base.recs[(kinds[0])+'V'];const mc=Math.max(0.1,(V.FN[1]-(V.mw+V.ml/2)*V.g)/V.g),kw=p.k*1000*lg.MR0*lg.MR0;return(c*lg.MR0*lg.MR0/(2*Math.sqrt(kw*mc))).toFixed(2);};
+  const rows=[['Spring rate (N/mm)',B.p.k.toFixed(2),T.p.k.toFixed(2)],['Ride height change (mm, + lower)',sgn(B.p.dh,1),sgn(T.p.dh,1)],
+    ['Leg angle at rest (°)',fr(B.info,l=>l.th.toFixed(2)),fr(T.info,l=>l.th.toFixed(2))],
+    ['Collar preload at full extension (mm)',fr(B.info,l=>l.collar>=0?l.collar.toFixed(1):'slack '+(-l.collar).toFixed(1)),fr(T.info,l=>l.collar>=0?l.collar.toFixed(1):'slack '+(-l.collar).toFixed(1))],
+    ['Preload force at full extension (N)',fr(B.info,l=>String(Math.round(Math.max(0,l.collarF)))),fr(T.info,l=>String(Math.round(Math.max(0,l.collarF))))],
+    ['Spring compression at rest (mm)',fr(B.info,l=>l.x0.toFixed(1)),fr(T.info,l=>l.x0.toFixed(1))],
+    ['Bump damping (N·s/m)',String(Math.round(B.p.cb)),String(Math.round(T.p.cb))],['Rebound damping (N·s/m)',String(Math.round(B.p.cr)),String(Math.round(T.p.cr))],
+    ['Damping ratio bump / rebound, front',zetaB(B.p,B.info,B.p.cb)+' / '+zetaB(B.p,B.info,B.p.cr),zeta(T.p,T.info,T.p.cb)+' / '+zeta(T.p,T.info,T.p.cr)]];
+  $('uParams').innerHTML='<thead><tr><th></th><th>Current</th><th>Tuned</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>').join('')+'</tbody>';
+  $('uParamsNote').textContent='Collar preload is the spring compression with the shock fully extended (slack = the spring is loose there). Preloads include the wheel and leg weight carried straight by the tyres, so they are lower than the Statics tab estimate, which puts all the weight at the CG.';
+  const mrows=[];kinds.forEach(k=>{const b=B.res[k],t=T.res[k];mrows.push(['sec',nm[k].charAt(0).toUpperCase()+nm[k].slice(1)]);
+    mrows.push(['Peak acceleration (g)',b.peak.toFixed(2),t.peak.toFixed(2),pct(t.peak,b.peak).replace(' vs current','')]);
+    mrows.push(['RMS acceleration (g)',b.rms.toFixed(3),t.rms.toFixed(3),pct(t.rms,b.rms).replace(' vs current','')]);
+    mrows.push(['Closest to bump stop (mm)',(b.minMargin*1000).toFixed(1),(t.minMargin*1000).toFixed(1),'']);
+    if(k==='run')mrows.push(['Outcome',b.reason+', '+b.tEnd.toFixed(1)+' s',t.reason+', '+t.tEnd.toFixed(1)+' s','']);});
+  $('uMetrics').innerHTML='<thead><tr><th></th><th>Current</th><th>Tuned</th><th>Change</th></tr></thead><tbody>'+mrows.map(r=>r[0]==='sec'?'<tr class="sec"><td colspan="4">'+r[1]+'</td></tr>':'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td><td>'+r[3]+'</td></tr>').join('')+'</tbody>';
+  const host=$('uCharts');host.innerHTML='';const jobs=[];
+  kinds.forEach(k=>{const Rb=B.recs[k],Rt=T.recs[k],fa=snap.tune.foreAft;const dt=k==='drop'?0.001:0.005,tEnd=Math.max(Rb.t[Rb.t.length-1],Rt.t[Rt.t.length-1]);const R={t:[],a:[],b:[]};
+    const aAt=(Rx,i)=>fa?Math.hypot(Rx.nza[i]-1,Rx.nxa[i]):Rx.nza[i]-1;
+    for(let t=0;t<=tEnd+1e-9;t+=dt){R.t.push(t);const ib=idxAt(Rb,t),it=idxAt(Rt,t);R.b.push(t<=Rb.t[Rb.t.length-1]?aAt(Rb,ib):NaN);R.a.push(t<=Rt.t[Rt.t.length-1]?aAt(Rt,it):NaN);}
+    jobs.push({R,def:{title:k==='run'?'Terrain run':'Drop test',sub:(fa?'Total':'Vertical')+' CG acceleration',unit:'g',dec:2,zero:true,minSpan:0.5,series:[{name:'Tuned',color:cssv('--s1'),get:i=>R.a[i]},{name:'Current',color:cssv('--s2'),dash:true,get:i=>R.b[i]}]}});});
+  const boxes=jobs.map(j=>{const box=document.createElement('div');box.className='u-chartbox';box.dataset.lay='chart:'+j.def.title;host.appendChild(box);return box;});jobs.forEach((j,i)=>timeCharts(boxes[i],j.R,[j.def],()=>{}));
+  const msgs=[];const tm=Math.min(...kinds.map(k=>T.res[k].minMargin));
+  if(T.f>=B.f-1e-9)msgs.push(['warn','No setup in these ranges beat the current one. Widen the ranges or change the objective.']);
+  else msgs.push(['ok','Best setup found at trial '+T.i+' of '+UV.trials.length+'. Apply it to copy the spring rate, damping and ride height into the design.']);
+  if(tm<snap.tune.clear/1000+0.002)msgs.push(['info','The tuned setup uses the stroke to within '+(tm*1000).toFixed(1)+' mm of the bump stops, the clearance you allowed. Raise the minimum clearance for more margin.']);
+  ['k','dh','cb','cr'].forEach(k=>{const v=snap.tune.vars[k];if(!v.on)return;const x=(T.p[k]-v.min)/(v.max-v.min);if(x<0.01||x>0.99)msgs.push(['info',UVARS.find(q=>q[0]===k)[1]+' ended at the '+(x<0.5?'bottom':'top')+' of its range. The best value may lie beyond it.']);});
+  const rv=UV.best.recs[kinds[0]+'V'];if(rv&&rv.rigid&&kinds.includes('run'))msgs.push(['info','With rigid tyres, the short impacts on sharp obstacles pass straight through the leg pivots, so spring and damper changes mostly lower the RMS and the drop peaks rather than the rock-strike peaks.']);
+  checkList($('uChecks'),msgs);}
+function uApply(){const T=UV.best;if(!T)return;const p=T.p;S.mode='manual';S.kman=Math.round(p.k*100)/100;S.dyn.cb=Math.round(p.cb);S.dyn.cr=Math.round(p.cr);
+  for(const s of ['L','R']){const leg=S.legs[s],th=Math.asin(clamp(Math.sin(leg.th*D2R)-p.dh/leg.L,-0.999,0.999))*R2D;leg.th=Math.round(th*100)/100;leg.hmax=Math.round(leg.hmax-p.dh);leg.droop=Math.round(leg.droop+p.dh);}
+  fixups();TER=null;resetDyn();fit();update();save();UV.sig='';
+  checkList($('uChecks'),[['ok','Applied: spring rate '+S.kman.toFixed(2)+' N/mm (Statics sizing set to "Spring rate I choose"), damping '+S.dyn.cb+' / '+S.dyn.cr+' N·s/m, start angle '+S.legs.R.th.toFixed(2)+'°. Max bump and droop were shifted so the shock limits stay where they were.']]);}
+function uCsv(){const tr=UV.trials;if(!tr.length)return;const head='trial,k_N_per_mm,ride_change_mm,bump_damping_Nspm,rebound_damping_Nspm,score,run_peak_g,run_rms_g,run_clearance_mm,drop_peak_g,drop_rms_g,drop_clearance_mm,collar_front_mm,collar_rear_mm';
+  const L=tr.map(t=>{const r=t.res||{},g=(k,f)=>r[k]?f(r[k]):'';return[t.i,t.p.k.toFixed(3),t.p.dh.toFixed(2),t.p.cb.toFixed(1),t.p.cr.toFixed(1),t.f.toFixed(4),g('run',m=>m.peak.toFixed(3)),g('run',m=>m.rms.toFixed(4)),g('run',m=>(m.minMargin*1000).toFixed(1)),g('drop',m=>m.peak.toFixed(3)),g('drop',m=>m.rms.toFixed(4)),g('drop',m=>(m.minMargin*1000).toFixed(1)),t.info?t.info.legs[1].collar.toFixed(1):'',t.info?t.info.legs[0].collar.toFixed(1):''].join(',');});
+  offer('suspension-tuner-trials.csv',head+'\n'+L.join('\n')+'\n');}
+function uSync(){const T=S.tune;$('uScen').value=T.scen;$('uMetric').value=T.metric;$('uForeAft').checked=T.foreAft;document.querySelectorAll('[data-uv]').forEach(el=>{el.checked=T.vars[el.dataset.uv].on;});
+document.querySelectorAll('.u-wrow').forEach(el=>el.hidden=T.scen!=='both');}
+function uInit(){const g=$('gTune');
+  const addNum=(id,lab,u,st,mn,mx,get,set,cls)=>{const l=mkLabel(lab,u,id),n=mkNum(id,st,mn,mx,get,set);if(cls){l.classList.add(cls);n.classList.add(cls);}g.append(l,n);};
+  addNum('u-w','Terrain run share of the score','%',5,0,100,()=>S.tune.w,v=>{S.tune.w=v;},'u-wrow');
+  addNum('u-clear','Minimum bump-stop clearance','mm',1,-50,100,()=>S.tune.clear,v=>{S.tune.clear=v;});
+  addNum('u-budget','Trials','',5,5,500,()=>S.tune.budget,v=>{S.tune.budget=Math.round(v);});
+  g.querySelector('label[for="u-budget"] .u').remove();
+  const vh=$('uVars');UVARS.forEach(([k,lab,u,st,mn,mx])=>{const l=document.createElement('label');l.className='chk k';l.style.fontSize='13px';const c=document.createElement('input');c.type='checkbox';c.dataset.uv=k;c.addEventListener('change',()=>{S.tune.vars[k].on=c.checked;save();});
+      const sp=document.createElement('span');sp.textContent=lab+' ';const un=document.createElement('span');un.className='u';un.textContent='('+u+')';sp.appendChild(un);l.append(c,sp);vh.appendChild(l);
+      [['min','min'],['max','max']].forEach(([q])=>{const el=mkNum('u-'+q+'-'+k,st,mn,mx,()=>S.tune.vars[k][q],v=>{S.tune.vars[k][q]=v;});el.setAttribute('aria-label',lab+' '+q);vh.appendChild(el);});});
+  $('uScen').addEventListener('change',e=>{S.tune.scen=e.target.value;uSync();save();markStale();});$('uMetric').addEventListener('change',e=>{S.tune.metric=e.target.value;save();markStale();});
+  $('uForeAft').addEventListener('change',e=>{S.tune.foreAft=e.target.checked;save();markStale();});
+  $('uStart').addEventListener('click',uStart);$('uStop').addEventListener('click',()=>{UV.stop=true;uStatus('Stopping after this trial…');});$('uApply').addEventListener('click',uApply);$('uCsv').addEventListener('click',uCsv);uSync();}
+
+function resetDyn(){if(!dynReady)return;TER=null;TV.ed.fitted=false;TV.sel=null;TV.drv.s=0;renderObsList();}
+const TABS=['statics','terrain','drop','tune'];
+function showTab(name){if(!TABS.includes(name))name='statics';TABS.forEach(t=>{$('tab-'+t).hidden=t!==name;$('tab-btn-'+t).setAttribute('aria-selected',t===name?'true':'false');});
+  if(dynReady){if(name!=='terrain'){tStopLive('stopped');tPause();}if(name!=='drop')dPause();}
+  if(name==='statics')fit();update();if(dynReady){if(name==='terrain'){if(TV.rec&&TV.charts===null)tLoad(TV.rec,TV.veh,TV.reason);tDraw();}if(name==='drop')dDraw();if(name==='tune'){uConvDraw();if(UV.best&&UV.base&&!UV.running)uRender();}}}
+TABS.forEach(t=>$('tab-btn-'+t).addEventListener('click',()=>showTab(t)));
+document.querySelector('.tabs').addEventListener('keydown',e=>{if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft')return;const cur=TABS.findIndex(t=>$('tab-btn-'+t).getAttribute('aria-selected')==='true');const nx=TABS[(cur+(e.key==='ArrowRight'?1:TABS.length-1))%TABS.length];showTab(nx);$('tab-btn-'+nx).focus();});
+let rz=0;const ro=new ResizeObserver(()=>{cancelAnimationFrame(rz);rz=requestAnimationFrame(()=>{if($('tab-statics').hidden)return;const w=sheet.clientWidth;if(Math.abs(w-V.W)>2){fit();}update(false);});});ro.observe(sheet);
+const ro2=new ResizeObserver(()=>{requestAnimationFrame(()=>{if(!$('tab-terrain').hidden&&!TV.live)tDraw();if(!$('tab-drop').hidden)dDraw();});});ro2.observe($('tStage'));ro2.observe($('dStage'));
+try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{tDraw();dDraw();});}catch(e){}
+/* ---- Rover presets (left sidebar). A preset stores only the rover design keys below;
+   the map, run, drop and tuner settings are left alone when one is loaded. ---- */
+const PKEY='rover-suspension-sizer-presets-v1',PBUILTIN={id:'builtin-default',name:'Default',builtin:true};
+const PDKEYS=['m','share','cgx','cgy','rw','sym','mode','G','f','kman','legs','dyn'];
+const PICO={edit:'<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.8 2.7l2.5 2.5L6 12.5l-3.1.6.6-3.1z"/></svg>',
+  lock:'<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="7" width="9" height="6.5" rx="1.2"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2"/></svg>',
+  del:'<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.8 4.5h10.4M6.3 4.5V2.8h3.4v1.7M4.3 4.5l.6 8.7h6.2l.6-8.7"/></svg>'};
+let pEditing=null,pConfirmDel=null;
+function designOf(o){const d={};PDKEYS.forEach(k=>{d[k]=clone(o[k]);});return d;}
+function pCanon(o){if(Array.isArray(o))return '['+o.map(pCanon).join(',')+']';if(o&&typeof o==='object')return '{'+Object.keys(o).sort().map(k=>JSON.stringify(k)+':'+pCanon(o[k])).join(',')+'}';return JSON.stringify(o);}
+function pClean(d){return designOf(sanitize(d));}
+function pId(){return 'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function pNameOk(n){return String(n==null?'':n).replace(/\s+/g,' ').trim().slice(0,40);}
+function pLoadStore(){let st=null;try{st=JSON.parse(localStorage.getItem(PKEY)||'null');}catch(e){st=null;}
+  const out={active:null,collapsed:false,items:[]};
+  if(st&&typeof st==='object'){
+    if(Array.isArray(st.items))st.items.forEach(it=>{const nm=it&&pNameOk(it.name);if(nm&&it.design&&typeof it.design==='object'&&nm.toLowerCase()!==PBUILTIN.name.toLowerCase()&&!out.items.some(j=>j.name.toLowerCase()===nm.toLowerCase()))
+      out.items.push({id:typeof it.id==='string'&&it.id?it.id:pId(),name:nm,saved:typeof it.saved==='string'?it.saved:'',design:pClean(it.design)});});
+    out.active=typeof st.active==='string'?st.active:null;out.collapsed=st.collapsed===true;}
+  else out.active=pCanon(designOf(S))===pCanon(designOf(DEF))?PBUILTIN.id:null;
+  if(out.active&&out.active!==PBUILTIN.id&&!out.items.some(i=>i.id===out.active))out.active=null;
+  return out;}
+function pPersist(){try{localStorage.setItem(PKEY,JSON.stringify(PS));return true;}catch(e){pSay('This browser would not store the presets (storage blocked or full). Export them to keep a copy.');return false;}}
+function pItem(id){if(id===PBUILTIN.id)return {...PBUILTIN,saved:'',design:designOf(DEF)};return PS.items.find(i=>i.id===id)||null;}
+function pByName(n,except){n=n.toLowerCase();return PS.items.find(i=>i.id!==except&&i.name.toLowerCase()===n)||null;}
+function pSorted(){return PS.items.slice().sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:'base'}));}
+function pBusy(){return UV.running||TV.busy||!!TV.live||DV.busy;}
+function pModified(){const it=PS.active?pItem(PS.active):null;return !it||pCanon(designOf(S))!==pCanon(it.design);}
+function pDate(iso){const d=new Date(iso);return isNaN(d)?'':d.toLocaleDateString(undefined,{day:'numeric',month:'short'});}
+function pStamp(iso){const d=new Date(iso);return isNaN(d)?'':d.toLocaleString(undefined,{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+/** One-line summary: mass, spring rate (front/rear if they differ), save date. */
+function pSummary(it){const s=sanitize(it.design);let k='';
+  try{const M=RP.staticModel(s,{L:0,R:0});if(M.ok){const a=M.r.L.k,b=M.r.R.k;if(Number.isFinite(a)&&Number.isFinite(b))k=(Math.abs(a-b)<0.05?b.toFixed(1):a.toFixed(1)+'/'+b.toFixed(1))+' N/mm';}}catch(e){}
+  const m=(Math.round(s.m*10)/10)+' kg',when=it.builtin?'built-in':pDate(it.saved);
+  const short=[m,k||'k not valid'].join(' · ');
+  const long=[it.name,'Mass '+m,'spring '+(k||'not valid'),'damping '+s.dyn.cb+'/'+s.dyn.cr+' N·s/m','leg '+s.legs.R.L+' mm at '+s.legs.R.th+'°',it.builtin?'built in':'saved '+pStamp(it.saved)].join(', ');
+  return {short,when,long};}
+let pUndoGuard=null;
+function pSay(msg,undo,guard){const el=$('pStatus');el.textContent=msg;pUndoGuard=undo&&guard?pCanon(designOf(S)):null;if(undo){const u=document.createElement('button');u.type='button';u.className='p-undo';u.textContent='Undo';u.addEventListener('click',()=>undo(),{once:true});el.appendChild(u);}}
+function pBtn(txt,cls,fn){const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=txt;b.addEventListener('click',fn);return b;}
+function pIco(label,svg,fn,extra){const b=document.createElement('button');b.type='button';b.className='p-ico'+(extra?' '+extra:'');b.setAttribute('aria-label',label);b.title=label;b.innerHTML=svg;b.addEventListener('click',fn);return b;}
+
+function pRender(){const L=$('pList');L.textContent='';let focusEl=null;
+  [pItem(PBUILTIN.id),...pSorted()].forEach(it=>{
+    const li=document.createElement('li');li.className='p-row';li.dataset.id=it.id;if(it.id===PS.active)li.setAttribute('aria-current','true');
+    if(pConfirmDel===it.id){const box=document.createElement('div');box.className='p-confirm';const t=document.createElement('span');t.textContent='Delete “'+it.name+'”?';
+      const yes=pBtn('Delete','btn dangerb',()=>pDelete(it.id)),no=pBtn('Keep','btn',()=>{pConfirmDel=null;pRender();});
+      box.append(t,yes,no);box.addEventListener('keydown',e=>{if(e.key==='Escape'){pConfirmDel=null;pRender();}});li.appendChild(box);L.appendChild(li);focusEl=no;return;}
+    if(pEditing===it.id){const box=document.createElement('form');box.className='p-edit';const inp=document.createElement('input');inp.className='num';inp.maxLength=40;inp.value=it.name;inp.setAttribute('aria-label','New name for '+it.name);inp.spellcheck=false;
+      const msg=document.createElement('div');msg.className='p-msg';const row=document.createElement('div');row.className='row';
+      const ok=document.createElement('button');ok.type='submit';ok.className='btn primary';ok.textContent='Rename';const no=pBtn('Cancel','btn',()=>{pEditing=null;pRender();});row.append(ok,no);
+      box.append(inp,msg,row);box.addEventListener('submit',e=>{e.preventDefault();const r=pRename(it.id,inp.value);if(r){msg.textContent=r;msg.className='p-msg bad';inp.focus();}});
+      inp.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();pEditing=null;pRender();}});li.appendChild(box);L.appendChild(li);focusEl=inp;return;}
+    const sm=pSummary(it),b=document.createElement('button');b.type='button';b.className='p-load';b.title=(it.id===PS.active?'Active. Click to go back to the saved version. ':'Load. ')+sm.long;
+    const top=document.createElement('span');top.className='p-top';const nm=document.createElement('span');nm.className='p-name';nm.textContent=it.name;const dt=document.createElement('span');dt.className='p-date';dt.textContent=sm.when;top.append(nm,dt);
+    const su=document.createElement('span');su.className='p-sum';su.textContent=sm.short;b.append(top,su);b.addEventListener('click',()=>pLoad(it.id));
+    const tools=document.createElement('span');tools.className='p-tools';
+    if(it.builtin){const lk=document.createElement('span');lk.className='p-lock';lk.innerHTML=PICO.lock;lk.title='Built in: cannot be renamed, overwritten or deleted.';lk.setAttribute('role','img');lk.setAttribute('aria-label','Built in');tools.appendChild(lk);}
+    else tools.append(pIco('Rename '+it.name,PICO.edit,()=>{pEditing=it.id;pConfirmDel=null;pRender();}),pIco('Delete '+it.name,PICO.del,()=>{pConfirmDel=it.id;pEditing=null;pRender();},'del'));
+    li.append(b,tools);L.appendChild(li);});
+  if(!PS.items.length){const e=document.createElement('li');e.className='p-empty';e.textContent='No saved presets yet. Set up the rover, then Save as new.';L.appendChild(e);}
+  pMark();if(focusEl){focusEl.focus();if(focusEl.select)focusEl.select();}}
+
+/** Cheap refresh of the "active" line, the Overwrite button and the rail label (runs on every save()). */
+function pMark(){if(!PS)return;const it=PS.active?pItem(PS.active):null,mod=pModified(),c=$('pCur');c.textContent='';
+  if(pUndoGuard&&pUndoGuard!==pCanon(designOf(S))){pUndoGuard=null;const u=$('pStatus').querySelector('.p-undo');if(u)u.remove();}
+  const lab=document.createElement('span');lab.textContent=it?'Active':'On screen';const b=document.createElement('b');b.textContent=it?it.name:'unsaved design';c.append(lab,b);
+  if(it&&mod){const p=document.createElement('span');p.className='pill warn';p.textContent='edited';p.title='The rover on screen differs from the saved preset.';c.appendChild(p);}
+  const ob=$('pOver');ob.disabled=!it||!!it.builtin||!mod;
+  ob.title=!it?'Load or save a preset first.':it.builtin?'The built-in Default cannot be overwritten. Use Save as new.':!mod?'No changes since “'+it.name+'” was saved.':'Replace “'+it.name+'” with the rover on screen.';
+  $('pRailTxt').textContent='Presets'+(it?' · '+it.name+(mod?' (edited)':''):'');}
+
+function pApplyDesign(d){const c=pClean(d);PDKEYS.forEach(k=>{S[k]=clone(c[k]);});ui.h={L:0,R:0};fixups();fit();update();save();}
+function pLoad(id){const it=pItem(id);if(!it)return;
+  if(pBusy()){pSay('Stop the running simulation, live drive or tuner before switching presets.');return;}
+  if(id===PS.active&&!pModified()){pSay('“'+it.name+'” is already loaded.');return;}
+  const prev={design:designOf(S),active:PS.active},revert=id===PS.active;pEditing=null;pConfirmDel=null;
+  pApplyDesign(it.design);PS.active=id;pPersist();pRender();
+  pSay(revert?'Went back to the saved “'+it.name+'”.':'Loaded “'+it.name+'”.',()=>{if(pBusy()){pSay('Stop the running simulation first.');return;}pApplyDesign(prev.design);PS.active=prev.active;pPersist();pRender();pSay('Back to the rover you had before.');},true);}
+function pOverwrite(id){const it=PS.items.find(i=>i.id===id);if(!it)return;const prev=clone(it),prevActive=PS.active;
+  it.design=pClean(designOf(S));it.saved=new Date().toISOString();PS.active=id;pPersist();pRender();
+  pSay('Overwrote “'+it.name+'” with the rover on screen.',()=>{const j=PS.items.find(i=>i.id===id);if(j)Object.assign(j,prev);else PS.items.push(prev);PS.active=prevActive;pPersist();pRender();pSay('“'+prev.name+'” is back to its earlier version.');});}
+function pRename(id,raw){const it=PS.items.find(i=>i.id===id);if(!it)return null;const nm=pNameOk(raw);
+  if(!nm)return 'Type a name.';if(nm.toLowerCase()===PBUILTIN.name.toLowerCase())return '“Default” is the built-in preset.';if(pByName(nm,id))return 'Another preset already has that name.';
+  const old=it.name;pEditing=null;if(nm===old){pRender();return null;}it.name=nm;pPersist();pRender();pSay('Renamed “'+old+'” to “'+nm+'”.');return null;}
+function pDelete(id){const i=PS.items.findIndex(x=>x.id===id);if(i<0)return;const it=PS.items[i],wasActive=PS.active===id;
+  PS.items.splice(i,1);if(wasActive)PS.active=null;pConfirmDel=null;pPersist();pRender();
+  pSay('Deleted “'+it.name+'”.'+(wasActive?' The rover on screen is unchanged.':''),()=>{if(!pByName(it.name))PS.items.push(it);if(wasActive)PS.active=id;pPersist();pRender();pSay('Restored “'+it.name+'”.');});}
+
+/* Save as new: inline name form. A name that matches an existing preset turns the button into Overwrite. */
+function pSuggest(){for(let n=PS.items.length+1;;n++){const nm='Design '+n;if(!pByName(nm))return nm;}}
+function pFormCheck(){const nm=pNameOk($('pName').value),ex=nm&&pByName(nm),sv=$('pSave'),msg=$('pFormMsg');
+  sv.classList.toggle('warnb',!!ex);sv.classList.toggle('primary',!ex);sv.textContent=ex?'Overwrite “'+ex.name+'”':'Save';msg.className='p-msg'+(ex?' warn':'');
+  msg.textContent=ex?'A preset with this name exists. Saving replaces it.':nm.toLowerCase()===PBUILTIN.name.toLowerCase()?'“Default” is the built-in preset; pick another name.':'';
+  if(nm.toLowerCase()===PBUILTIN.name.toLowerCase())msg.className='p-msg bad';}
+function pOpenForm(){pEditing=null;pConfirmDel=null;pRender();$('pForm').hidden=false;$('pNew').disabled=true;const i=$('pName');i.value=pSuggest();pFormCheck();i.focus();i.select();}
+function pCloseForm(){$('pForm').hidden=true;$('pNew').disabled=false;$('pFormMsg').textContent='';}
+function pSubmit(e){e.preventDefault();const nm=pNameOk($('pName').value),msg=$('pFormMsg');
+  if(!nm){msg.textContent='Type a name.';msg.className='p-msg bad';return;}
+  if(nm.toLowerCase()===PBUILTIN.name.toLowerCase()){pFormCheck();return;}
+  const ex=pByName(nm);pCloseForm();$('pNew').focus();
+  if(ex){pOverwrite(ex.id);return;}
+  const it={id:pId(),name:nm,saved:new Date().toISOString(),design:pClean(designOf(S))};PS.items.push(it);const prevActive=PS.active;PS.active=it.id;pPersist();pRender();
+  pSay('Saved “'+nm+'”.',()=>{PS.items=PS.items.filter(x=>x.id!==it.id);PS.active=prevActive;pPersist();pRender();pSay('Removed “'+nm+'” again.');});}
+
+/* Export / import. Import takes an exported presets file or a single design JSON (Statics tab → Download JSON). */
+function pExport(){if(!PS.items.length){pSay('There are no saved presets to export yet.');return;}
+  const out={kind:'rover-suspension-presets',v:1,exported:new Date().toISOString(),items:pSorted().map(i=>({name:i.name,saved:i.saved,design:i.design}))};
+  offer('rover-presets.json',JSON.stringify(out,null,2),t=>pSay(t.replace(' Use Copy JSON instead.','')));}
+function pImportText(txt,fname){let o;try{o=JSON.parse(txt);}catch(e){pSay('That file is not JSON.');return;}
+  let list=null;const base=pNameOk(String(fname||'Imported').replace(/\.json$/i,''))||'Imported';
+  if(o&&o.kind==='rover-suspension-presets'&&Array.isArray(o.items))list=o.items;
+  else if(o&&typeof o==='object'&&o.legs&&typeof o.legs==='object')list=[{name:base,design:o}];
+  if(!list){pSay('That file is neither a presets export nor a design JSON from this tool.');return;}
+  let added=0,same=0,renamed=0;
+  list.forEach(src=>{if(!src||!src.design||typeof src.design!=='object')return;const d=pClean(src.design);let nm=pNameOk(src.name)||base;
+    const ex=pByName(nm);if(ex&&pCanon(ex.design)===pCanon(d)){same++;return;}
+    if(ex||nm.toLowerCase()===PBUILTIN.name.toLowerCase()){const stem=nm.slice(0,34);let n=2;while(pByName(stem+' ('+n+')')||(stem+' ('+n+')').toLowerCase()===PBUILTIN.name.toLowerCase())n++;nm=stem+' ('+n+')';renamed++;}
+    PS.items.push({id:pId(),name:nm,saved:typeof src.saved==='string'&&src.saved?src.saved:new Date().toISOString(),design:d});added++;});
+  if(added)pPersist();pRender();
+  const parts=[];parts.push(added?'Imported '+added+' preset'+(added===1?'':'s')+'.':'Nothing new to import.');if(renamed)parts.push(renamed+' renamed to avoid a clash.');if(same)parts.push(same+' already here.');
+  pSay(parts.join(' '));}
+function pSetCollapsed(v,focus){PS.collapsed=v;$('shell').classList.toggle('p-collapsed',v);$('pCollapse').setAttribute('aria-expanded',v?'false':'true');$('pExpand').setAttribute('aria-expanded',v?'false':'true');pPersist();
+  if(focus)(v?$('pExpand'):$('pCollapse')).focus();}
+function pInit(){PS=pLoadStore();
+  $('pNew').addEventListener('click',pOpenForm);$('pCancel').addEventListener('click',()=>{pCloseForm();$('pNew').focus();});
+  $('pForm').addEventListener('submit',pSubmit);$('pName').addEventListener('input',pFormCheck);
+  $('pName').addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();pCloseForm();$('pNew').focus();}});
+  $('pOver').addEventListener('click',()=>{if(PS.active&&PS.active!==PBUILTIN.id)pOverwrite(PS.active);});
+  $('pExport').addEventListener('click',pExport);
+  $('pImport').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{pImportText(String(rd.result),f.name);e.target.value='';};rd.onerror=()=>{pSay('Could not read that file.');e.target.value='';};rd.readAsText(f);});
+  $('pCollapse').addEventListener('click',()=>pSetCollapsed(true,true));$('pExpand').addEventListener('click',()=>pSetCollapsed(false,true));
+  $('shell').classList.toggle('p-collapsed',PS.collapsed);$('pCollapse').setAttribute('aria-expanded',PS.collapsed?'false':'true');
+  window.addEventListener('storage',e=>{if(e.key!==PKEY)return;const keep=PS.collapsed;PS=pLoadStore();PS.collapsed=keep;pRender();});
+  pPersist();pRender();}
+
+/* ---- Customize layout. Hideable parts carry data-lay keys: static blocks and cards in the HTML,
+   panel sections / vehicle subsections / parameter rows tagged here, tiles and charts when they are made.
+   Hidden keys are stored per tab ("tab|key") and applied with a generated stylesheet, so re-rendered
+   tiles and charts are hidden the moment they appear. Hiding never changes any value or calculation. ---- */
+const LKEY='rover-suspension-sizer-layout-v1';
+const LAYEYE='<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8 12.1 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></svg>';
+const LAYEYEOFF='<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 2.5l11 11M6.6 4C7 3.7 7.5 3.5 8 3.5c4.1 0 6.5 4.5 6.5 4.5a12 12 0 01-1.9 2.4M10.6 11.6A6 6 0 018 12.5C3.9 12.5 1.5 8 1.5 8a12 12 0 012.6-3"/></svg>';
+const HELPSEL='.panel p.hint,.presets p.hint,p.note,.chart-head>.hint,.card>p.hint';
+const TABNAMES={statics:'Statics & sizing',terrain:'Terrain run',drop:'Drop test',tune:'Tuner'};
+const LAY={hidden:new Set(),help:true,on:false};
+function layLoad(){try{const o=JSON.parse(localStorage.getItem(LKEY)||'null');if(o&&typeof o==='object'){if(Array.isArray(o.hidden))o.hidden.forEach(k=>{if(typeof k==='string'&&/^(statics|terrain|drop|tune)\|./.test(k))LAY.hidden.add(k);});if(o.help===false)LAY.help=false;}}catch(e){}}
+function laySave(){try{localStorage.setItem(LKEY,JSON.stringify({v:1,hidden:[...LAY.hidden],help:LAY.help}));}catch(e){}}
+function layTabOf(el){const sec=el.closest('[role="tabpanel"]');return sec?sec.id.replace(/^tab-/,''):null;}
+function layKey(el){const t=layTabOf(el);return t?t+'|'+el.dataset.lay:null;}
+function layName(el){if(el.dataset.layName)return el.dataset.layName;const k=el.dataset.lay||'';return k.slice(k.indexOf(':')+1);}
+const layCssStr=v=>v.replace(/\\/g,'\\\\').replace(/"/g,'\\"');
+function layCurTab(){return TABS.find(t=>!$('tab-'+t).hidden)||'statics';}
+
+/** Wrap each parameter row (label + controls) of the input grids in a subgrid div, and each vehicle
+ *  subsection (heading + its rows) in another, so a whole row or subsection can be hidden. */
+function layWrapRows(){document.querySelectorAll('[role="tabpanel"] aside.panel .grid-1, [role="tabpanel"] aside.panel .grid-lr, [role="tabpanel"] aside.panel .u-vars').forEach(g=>{
+  const kids=[...g.children];let row=null,sub=null;
+  kids.forEach(el=>{if(el.classList.contains('lrow')||el.classList.contains('lsub'))return;
+    const isSub=el.classList.contains('hd')&&el.style.gridColumn;
+    if(isSub){sub=document.createElement('div');sub.className='lsub';sub.dataset.lay='sub:'+el.textContent.trim();g.insertBefore(sub,el);sub.appendChild(el);row=null;return;}
+    if(el.classList.contains('k')){row=document.createElement('div');row.className='lrow';(sub||g).insertBefore(row,sub?null:el);row.appendChild(el);
+      const ctl=row.querySelector('input[id],select[id]')||el.querySelector('input[id],select[id]');
+      row.dataset.lay='row:'+(el.htmlFor||(ctl&&ctl.id)||el.textContent.trim());row.dataset.layName=el.textContent.replace(/\s+/g,' ').trim();return;}
+    if(row){row.appendChild(el);}});
+  g.querySelectorAll('.lrow').forEach(r=>{const c=r.querySelector('input[id],select[id]');if(c&&r.dataset.lay==='row:'+r.dataset.layName)r.dataset.lay='row:'+c.id;});});
+  // panel sections (each direct child of an inputs panel with a heading)
+  document.querySelectorAll('[role="tabpanel"] aside.panel').forEach(pn=>{[...pn.children].forEach(sec=>{const h=sec.querySelector(':scope > h2, :scope > div > h2');if(!h)return;
+    const nm=[...h.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join('').trim();sec.dataset.lay='sec:'+nm;sec.dataset.layName=nm;});});
+  document.querySelectorAll('[role="tabpanel"] .derived').forEach(d=>{d.dataset.lay='sub:derived';d.dataset.layName='Derived values';});
+  // plain blocks (drawing, sliders, checks, replay bar…) get room above for their chip in customize mode
+  document.querySelectorAll('[role="tabpanel"] [data-lay]').forEach(el=>{if(el.closest('aside.panel')&&!el.classList.contains('derived'))return;if(el.matches('.card,.tile,.chart,.u-chartbox,.lrow,.lsub'))return;el.classList.add('lay-blk');});}
+
+function layCss(){const out=[];
+  LAY.hidden.forEach(k=>{const i=k.indexOf('|'),tab=k.slice(0,i),lay=layCssStr(k.slice(i+1)),sel='#tab-'+tab+' [data-lay="'+lay+'"]';
+    if(LAY.on)out.push(sel+'>:not(.lay-chip){opacity:.3}',sel+'{outline-color:var(--warn)!important}');
+    else out.push(sel+'{display:none!important}','#tab-'+tab+' .cols:has(>[data-lay="'+lay+'"]){grid-template-columns:minmax(0,1fr)}');});
+  if(!LAY.on)TABS.forEach(tab=>{const sec=$('tab-'+tab),hid=el=>LAY.hidden.has(tab+'|'+el.dataset.lay);
+    // a subsection whose rows are all hidden loses its heading too
+    sec.querySelectorAll('.lsub').forEach(sb=>{const rows=[...sb.querySelectorAll(':scope > .lrow')];if(rows.length&&rows.every(hid))out.push('#tab-'+tab+' [data-lay="'+layCssStr(sb.dataset.lay)+'"]{display:none!important}');});
+    // an inputs panel with every section hidden: drop the column so the main area takes the width
+    const pn=sec.querySelector('.work > aside.panel');if(pn){const ss=[...pn.querySelectorAll(':scope > [data-lay]')];if(ss.length&&ss.every(hid))out.push('#tab-'+tab+' .work{grid-template-columns:minmax(0,1fr)}','#tab-'+tab+' .work>aside.panel{display:none}');}});
+  if(!LAY.help)out.push(HELPSEL+'{display:none!important}');
+  $('layStyle').textContent=out.join('\n');}
+
+function layChip(el){let c=el.querySelector(':scope > .lay-chip');if(!c){c=document.createElement('button');c.type='button';c.className='lay-chip';el.appendChild(c);}
+  const off=LAY.hidden.has(layKey(el)),nm=layName(el),want=(off?'1':'0');
+  if(c.dataset.st!==want){c.dataset.st=want;c.innerHTML=(off?LAYEYEOFF:LAYEYE)+'<span>'+(off?'Hidden':'Hide')+'</span>';}
+  c.setAttribute('aria-pressed',off?'true':'false');c.setAttribute('aria-label',(off?'Show ':'Hide ')+nm);c.title=(off?'Hidden: click to show ':'Hide ')+nm;}
+function layDecorate(){document.querySelectorAll('[role="tabpanel"] [data-lay]').forEach(layChip);}
+let layMO=null,layRaf=0;
+function layCount(){const n=LAY.hidden.size,c=$('layCount');c.hidden=!n;c.textContent=n+' hidden';
+  const t=layCurTab(),nt=[...LAY.hidden].filter(k=>k.startsWith(t+'|')).length;$('layShowTab').disabled=!nt;$('layShowAll').disabled=!n;$('layTab').textContent=TABNAMES[t];}
+function laySet(on){if(LAY.on===on)return;LAY.on=on;document.body.classList.toggle('customizing',on);$('layBar').hidden=!on;$('layBtn').setAttribute('aria-pressed',on?'true':'false');
+  if(on){layDecorate();layMO=new MutationObserver(()=>{cancelAnimationFrame(layRaf);layRaf=requestAnimationFrame(layDecorate);});layMO.observe(document.querySelector('.tabhost'),{childList:true,subtree:true});}
+  else{if(layMO)layMO.disconnect();layMO=null;}
+  layCss();layCount();requestAnimationFrame(layRedraw);}
+/** Charts are drawn to the width of their box, so redraw the visible tab's charts after the layout changes. */
+function layRedraw(){const t=layCurTab();
+  if(t==='statics'){fit();update();}
+  else if(t==='terrain'){if(TV.rec&&!TV.live&&!TV.busy){TV.charts=timeCharts($('tCharts'),TV.rec,chartDefs(TV.veh,TV.rec,'run'),x=>tSeek(x));tSeek(TV.t||0);}tDraw();}
+  else if(t==='drop'){if(DV.rec&&!DV.busy){DV.charts=timeCharts($('dCharts'),DV.rec,chartDefs(DV.veh,DV.rec,'drop'),x=>dSeek(x));dSeek(DV.t||0);}dDraw();}
+  else if(t==='tune'){if(UV.best&&UV.base&&!UV.running)uRender();uConvDraw();}}
+function layToggle(el){const k=layKey(el);if(!k)return;if(LAY.hidden.has(k))LAY.hidden.delete(k);else LAY.hidden.add(k);laySave();layCss();layCount();
+  document.querySelectorAll('#tab-'+k.slice(0,k.indexOf('|'))+' [data-lay]').forEach(e=>{if(e.dataset.lay===el.dataset.lay)layChip(e);});}
+function layInit(){layLoad();const st=document.createElement('style');st.id='layStyle';document.head.appendChild(st);
+  layWrapRows();layCss();layCount();$('layHelp').checked=LAY.help;
+  $('layBtn').addEventListener('click',()=>laySet(!LAY.on));$('layDone').addEventListener('click',()=>{laySet(false);$('layBtn').focus();});
+  document.addEventListener('click',e=>{const c=e.target.closest('.lay-chip');if(!c||!LAY.on)return;e.preventDefault();e.stopPropagation();layToggle(c.parentElement);},true);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&LAY.on&&!e.target.closest('input,select,textarea')){laySet(false);$('layBtn').focus();}});
+  $('layHelp').addEventListener('change',e=>{LAY.help=e.target.checked;laySave();layCss();});
+  $('layShowTab').addEventListener('click',()=>{const t=layCurTab();[...LAY.hidden].forEach(k=>{if(k.startsWith(t+'|'))LAY.hidden.delete(k);});laySave();layCss();layCount();layDecorate();});
+  $('layShowAll').addEventListener('click',()=>{LAY.hidden.clear();LAY.help=true;$('layHelp').checked=true;laySave();layCss();layCount();layDecorate();});
+  TABS.forEach(t=>$('tab-btn-'+t).addEventListener('click',()=>{if(LAY.on){layCount();layDecorate();}}));}
+
+buildVehPanels();tInit();dInit();uInit();layInit();dynReady=true;syncDyn();
+fixups();syncInputs();pInit();showTab((location.hash||'#statics').slice(1));
+})();
+</script>
+</body>
+</html>

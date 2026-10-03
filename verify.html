@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Suspension Physics Checks</title>
+<style>
+:root{--bg:#eceef1;--panel:#f8f9fa;--ink:#14171b;--ink2:#4b525b;--line:#d3d8de;--good:#257a3c;--good-wash:#e2f2e6;--bad:#bb3030;--bad-wash:#f8e2e2;
+  --f-body:system-ui,-apple-system,"Segoe UI",sans-serif;--f-mono:ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f1114;--panel:#16191d;--ink:#e7eaee;--ink2:#a9b0b9;--line:#2b3037;--good:#4fbf6c;--good-wash:#15301e;--bad:#ef6b6b;--bad-wash:#3a1818;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1114;--panel:#16191d;--ink:#e7eaee;--ink2:#a9b0b9;--line:#2b3037;--good:#4fbf6c;--good-wash:#15301e;--bad:#ef6b6b;--bad-wash:#3a1818;color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body)}
+main{max-width:1100px;margin:0 auto;padding-inline:20px;padding-block:20px 40px}
+h1{font-size:24px;margin:0 0 4px}
+p{color:var(--ink2);margin:0 0 14px;max-width:75ch}
+.sum{font-weight:600;margin:12px 0}
+.wrap{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font:500 12px var(--f-mono);color:var(--ink2)}
+td.num{font-family:var(--f-mono);text-align:right;white-space:nowrap}
+.pill{font:600 11px var(--f-mono);padding:2px 8px;border-radius:999px}
+.ok{background:var(--good-wash);color:var(--good)}.no{background:var(--bad-wash);color:var(--bad)}
+tr.grp td{font-weight:600;background:var(--bg)}
+</style>
+</head>
+<body>
+<main>
+  <h1>Suspension physics checks</h1>
+  <p>Runs the checks in physics-tests.js against physics.js, the same code the Rover Suspension Sizer uses. Each check compares the model with something it was not built from: a force or moment balance, a finite difference, an energy budget or a closed-form result. The same checks run in Node with <code>node physics-tests.js</code>.</p>
+  <div class="sum" id="sum">Running…</div>
+  <div class="wrap"><table><thead><tr><th>Result</th><th>Check</th><th>Value</th><th>Limit</th><th>Notes</th></tr></thead><tbody id="rows"></tbody></table></div>
+</main>
+<script src="physics.js"></script>
+<script src="physics-tests.js"></script>
+<script>
+setTimeout(() => {
+  const sum = document.getElementById('sum'), body = document.getElementById('rows');
+  if (!window.RoverPhysics || !window.runPhysicsTests) { sum.textContent = 'physics.js or physics-tests.js was not found next to this page.'; return; }
+  const t0 = performance.now(), res = window.runPhysicsTests(window.RoverPhysics), ms = performance.now() - t0;
+  let grp = '', fails = 0;
+  res.forEach(r => {
+    if (r.group !== grp) { grp = r.group; const tr = document.createElement('tr'); tr.className = 'grp'; const td = document.createElement('td'); td.colSpan = 5; td.textContent = grp; tr.appendChild(td); body.appendChild(tr); }
+    if (!r.pass) fails++;
+    const tr = document.createElement('tr');
+    const c = (txt, cls) => { const td = document.createElement('td'); if (cls) td.className = cls; td.textContent = txt; tr.appendChild(td); return td; };
+    const p = c(''); const sp = document.createElement('span'); sp.className = 'pill ' + (r.pass ? 'ok' : 'no'); sp.textContent = r.pass ? 'PASS' : 'FAIL'; p.appendChild(sp);
+    c(r.name); c(Number(r.value).toExponential(3), 'num'); c(String(r.limit), 'num'); c(r.detail);
+    body.appendChild(tr);
+  });
+  sum.textContent = (res.length - fails) + ' of ' + res.length + ' checks passed in ' + (ms / 1000).toFixed(1) + ' s';
+}, 30);
+</script>
+</body>
+</html>
